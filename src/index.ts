@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command } from "commander";
 import path from "path";
 import fs from "fs";
@@ -79,13 +81,15 @@ class Gitpulse {
   filesDirectory(): Promise<string[]> {
     return new Promise((resolve, reject) => {
       const directories:string[] = [];
+      console.log(path.join(this.cwd))
       klaw(path.join(this.cwd))
         .on('data', (item) => { 
-            if (item.path.includes("Git-pulse") || item.path.includes(".git")){
+          // console.log(">>>>",item)
+            if (item.path.includes("sloth") || item.path.includes(".git")){
             }
+            
             else if(item.stats.isDirectory()){
               fs.readdir(item.path,(err,files)=>{
-                // console.log(item.path,files);
                 if(files.length===0){
                   directories.push(item.path);
                 }
@@ -110,11 +114,11 @@ class Gitpulse {
       const directories:string[] = [];
       klaw(path.join(this.stagingPath))
         .on('data', (item) => { 
-          // if (item.stats.isFile()) {
-          // console.log(item.path)
+
             if(item.stats.isDirectory()){
-              fs.readdir(item.path,(err,files)=>{
-                // console.log(item.path,files);
+              //! fine is it {recursive}?
+              fs.readdir(item.path,{recursive:true},(err,files)=>{
+                console.log("DIRECTOR",item.path,files);
                 if(files.length===0){
                   directories.push(item.path);
                 }
@@ -144,7 +148,7 @@ class Gitpulse {
         }
         const filteredFiles = files.filter(file => {
           const fileName = file as string;
-          return !fileName.startsWith('Git-pulse') &&
+          return !fileName.startsWith('sloth') &&
             !fileName.includes('.git') &&
             !fileName.includes('.gitpulse') &&
             !fileName.includes('node_modules') &&
@@ -162,12 +166,11 @@ class Gitpulse {
   async checkUpdates() {
     //! very inefficient
     let filesDirectory = await this.filesDirectory();
+    // console.log("FILES in DIRECTORY : ",filesDirectory);
     filesDirectory = filesDirectory.map((file)=>{
       return file.substring(this.cwd.length);
     })
-    var stagedDirectoryFiles = await this.stagedDirectoryFiles();
-
-    console.log("END:");
+    //! ERROR
     const untrackedFiles: string[] | null = [];
     const modifiedFiles: string[] | null = [];
     filesDirectory?.map((file => {
@@ -197,35 +200,33 @@ class Gitpulse {
       console.log(clc.red(`Untracked file -> ${file}`));
     });
     modifiedFiles.forEach((file) => {
-      console.log(clc.yellow(`Modified file -> ${file.replace("\\","/")}`));
+      console.log(clc.yellow(`Modified file -> ${file.replace(/\\/g,"/")}`));
     });
     if (untrackedFiles.length === 0 && modifiedFiles.length === 0) {
       console.log(clc.greenBright("Everything is up to date"));
     }
-    
+    // await fsExtra.emptyDir(this.stagingPath);
     //! make a fx to delete files automatically
-    stagedDirectoryFiles?.forEach((file => {
-      const a = file.substring(this.stagingPath.length);
-      const checkPath = path.join(this.cwd,a);
-      if(!fs.existsSync(checkPath)){
-        var  hasExtension: boolean | string = file.includes('.') && file.endsWith('.');
-        const stats="";
-               if (stats) { 
-              hasExtension = 'file'
-                } else {
-                      hasExtension = 'directory'
-                }
-        // console.log("STAT",stats);
-        // console.log("File not present  in W.DIR",checkPath);
-        if (hasExtension==="file") {
-          fs.unlinkSync(checkPath);
-          // console.log("File deleted:", checkPath);
-        } else if (hasExtension==="directory") {
-          // For Node.js 12 and later
-          fs.rmSync(file, { recursive: true, force: true });
-        } 
-      }
-    }))
+    // stagedDirectoryFiles?.forEach((file => {
+    //   const a = file.substring(this.stagingPath.length);
+    //   const checkPath = path.join(this.cwd,a);
+    //   console.log("PATH TO CHECK",checkPath)
+    //   const pathCheck = fs.existsSync(checkPath);
+    //   console.log("exists or not",pathCheck);
+    //   if(!pathCheck){
+    //     console.log("DELETE -> ",checkPath);
+    //     const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+    //     try {
+    //       if (!fileExtensionRegex.test(checkPath)) {
+    //         // fs.rmSync(file, { recursive:true });
+    //       } else {
+    //         // fs.unlinkSync(checkPath);
+    //       }
+    //     } catch (error) {
+          
+    //     }
+    //   }
+    // }))
 
   }
 
@@ -242,13 +243,9 @@ class Gitpulse {
                 } else {
                       hasExtension = 'directory'
                 }
-        // console.log("STAT",stats);
-        // console.log("File not present  in W.DIR",checkPath);
         if (hasExtension==="file") {
           fs.unlinkSync(checkPath);
-          // console.log("File deleted:", checkPath);
         } else if (hasExtension==="directory") {
-          // For Node.js 12 and later
           fs.rmSync(file, { recursive: true, force: true });
         } 
       }
@@ -262,6 +259,8 @@ class Gitpulse {
   }
 
   async add(file: string) {
+    ///!!!!!
+    await fsExtra.emptyDir(this.stagingPath);
     if (file === ".") {
 
       const filesDir = await this.filesDirectoryToStageEverything();
@@ -561,7 +560,6 @@ class Gitpulse {
         //     console.log("C",content);
         //   })
         // })
-        //* end of this fx
       // }
 
 
