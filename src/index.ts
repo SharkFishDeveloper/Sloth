@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import path, { resolve } from "path";
+import path from "path";
 import fs from "fs";
 import crypto from "crypto"
 import * as dirCompare from "dir-compare"
 import clc from "cli-color"
-import fsExtra, { copySync } from 'fs-extra';
+import fsExtra from 'fs-extra';
 import klaw from "klaw"
 import zlib from "zlib";
-import linereader from "line-reader"
+// import linereader from "line-reader"
 var configPath = path.join(process.cwd(), "/.gitpulse/config.json");
 
 class Gitpulse {
@@ -19,6 +19,8 @@ class Gitpulse {
   stagingPath = "";
   commitsPath = "";
   configPath = "";
+  head="";
+  currentHead=""
   cwd = "";
 
   constructor() {
@@ -27,6 +29,8 @@ class Gitpulse {
     this.objPath = path.join(this.gitpath, "obj");
     this.stagingPath = path.join(this.gitpath, "staging");
     this.commitsPath = path.join(this.gitpath, "commits.txt");
+    this.head = path.join(this.gitpath, "HEAD.txt");
+    this.currentHead = path.join(this.gitpath, "CURRENT.txt");
     if (!fs.existsSync(path.join(this.gitpath))) {
       console.log("No git directory exists");
     }
@@ -42,6 +46,8 @@ class Gitpulse {
           console.log(err);
         });
         fs.writeFileSync(this.commitsPath, "");
+        fs.writeFileSync(this.head, "");
+        fs.writeFileSync(this.currentHead, "");
         fs.mkdir(this.stagingPath, { recursive: true }, (err) => {
           console.log(err);
         });
@@ -54,7 +60,7 @@ class Gitpulse {
         fs.mkdir(`${this.objPath}/init`, { recursive: true }, (err) => {
           console.log(err);
         });
-
+        console.log(clc.bgBlue("Ininitialized empty .gitpulse successfully"));
       } catch (error) {
         console.log(error);
       }
@@ -346,6 +352,8 @@ class Gitpulse {
           .catch(err => console.error('Error during copy operation:', err));
       })
       fs.writeFileSync(this.commitsPath,`\${message}:init:${new Date()}`);
+      fs.writeFileSync(this.head,"init");
+      fs.writeFileSync(this.currentHead,"init");
     }
 
 //START FROM HERE
@@ -357,7 +365,7 @@ class Gitpulse {
       fs.mkdirSync(path.join(newCommitIdpath,"mdf"));
       fs.writeFileSync(path.join(newCommitIdpath,"ad.txt"),"");
       fs.writeFileSync(path.join(newCommitIdpath,"rm.txt"),"");
-      fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
+     
      try {
       const result = await dirCompare.compare(this.stagingPath, path.join(this.objPath, "init"),{compareContent:true});
       const modifiedFiles:string[]|null = [];
@@ -422,6 +430,9 @@ class Gitpulse {
     } catch (error) {
       console.error("Error comparing directories:", error);
     }
+    fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
+    fs.writeFileSync(this.head,newCommitId);
+    fs.writeFileSync(this.currentHead,newCommitId);
     }
     else if(lines.length>=2){
 
@@ -502,6 +513,8 @@ class Gitpulse {
 
       this.commpare2directoriesDiff(path.join(this.stagingPath,"/"),path.join(this.gitpath,"diff","/"),newCommitId);
       fs.promises.rmdir(path.join(this.gitpath,"diff"))
+      fs.writeFileSync(this.head,newCommitId);
+      fs.writeFileSync(this.currentHead,newCommitId);
     }
   }
   
@@ -589,6 +602,10 @@ class Gitpulse {
 
 
   async migrateToCommitInMain(commitId:string){
+    const current = fs.readFileSync(this.currentHead,"utf-8");
+    if(current === commitId){
+      return console.log(clc.greenBright(`You are already on ${commitId}`)); 
+    }
     const migPath = path.join(this.cwd)
     const dfiles = await this.extractTopLevelDirectories();
     console.log("D",dfiles)
@@ -607,8 +624,8 @@ class Gitpulse {
     }
     const commitDataPath: string = fs.readFileSync(this.commitsPath, "utf-8");
     const lines = commitDataPath.split('\n').filter(line => line !== '').reverse();
-    lines.pop();
-    lines.forEach((id)=>{
+      lines.pop();
+      lines.forEach((id)=>{
           const finalId = id.indexOf(":");
           console.log("ID",id.substring(finalId+1,finalId+41))
           const idc = id.substring(finalId+1,finalId+41)
@@ -676,6 +693,7 @@ class Gitpulse {
         })
       }
     )
+    fs.writeFileSync(this.currentHead,commitId);
   }
 
 
@@ -687,7 +705,7 @@ class Gitpulse {
         }
         const filesR= files;
         const fullPaths = files
-        .filter(file => !file.includes("sloth") && !file.includes(".git")) // Exclude specific files or directories
+        .filter(file => !file.includes("sloth") && !file.includes(".git"))
         .map(file => path.join(this.cwd, file)); 
         return resolve(fullPaths);
       })

@@ -54,12 +54,16 @@ class Gitpulse {
         this.stagingPath = "";
         this.commitsPath = "";
         this.configPath = "";
+        this.head = "";
+        this.current = "";
         this.cwd = "";
         this.rootpath = path_1.default.join(process.cwd());
         this.gitpath = path_1.default.join(this.rootpath, ".gitpulse");
         this.objPath = path_1.default.join(this.gitpath, "obj");
         this.stagingPath = path_1.default.join(this.gitpath, "staging");
         this.commitsPath = path_1.default.join(this.gitpath, "commits.txt");
+        this.head = path_1.default.join(this.gitpath, "HEAD.txt");
+        this.current = path_1.default.join(this.gitpath, "CURRENT.txt");
         if (!fs_1.default.existsSync(path_1.default.join(this.gitpath))) {
             console.log("No git directory exists");
         }
@@ -75,6 +79,8 @@ class Gitpulse {
                         console.log(err);
                     });
                     fs_1.default.writeFileSync(this.commitsPath, "");
+                    fs_1.default.writeFileSync(this.head, "");
+                    fs_1.default.writeFileSync(this.current, "");
                     fs_1.default.mkdir(this.stagingPath, { recursive: true }, (err) => {
                         console.log(err);
                     });
@@ -87,6 +93,7 @@ class Gitpulse {
                     fs_1.default.mkdir(`${this.objPath}/init`, { recursive: true }, (err) => {
                         console.log(err);
                     });
+                    console.log(cli_color_1.default.bgBlue("Ininitialized empty .gitpulse successfully"));
                 }
                 catch (error) {
                     console.log(error);
