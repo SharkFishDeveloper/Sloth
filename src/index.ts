@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import path from "path";
+import path, { resolve } from "path";
 import fs from "fs";
 import crypto from "crypto"
 import * as dirCompare from "dir-compare"
 import clc from "cli-color"
-import fsExtra from 'fs-extra';
+import fsExtra, { copySync } from 'fs-extra';
 import klaw from "klaw"
 import zlib from "zlib";
 import linereader from "line-reader"
@@ -177,7 +177,6 @@ class Gitpulse {
       const stagingfilePath = path.join(this.stagingPath, file);
       const dirfilePath = path.join(this.cwd, file);
       if (fs.existsSync(stagingfilePath)) {
-        // console.log("Staging file path ",stagingfilePath,"dirfilePath",dirfilePath);
         try {
           const contentFileDir = fs.readFileSync(stagingfilePath, "utf-8");
         const contentFileStaging = fs.readFileSync(dirfilePath, "utf-8");
@@ -205,54 +204,8 @@ class Gitpulse {
     if (untrackedFiles.length === 0 && modifiedFiles.length === 0) {
       console.log(clc.greenBright("Everything is up to date"));
     }
-    // await fsExtra.emptyDir(this.stagingPath);
-
-    //! make a fx to delete files automatically
-    // stagedDirectoryFiles?.forEach((file => {
-    //   const a = file.substring(this.stagingPath.length);
-    //   const checkPath = path.join(this.cwd,a);
-    //   console.log("PATH TO CHECK",checkPath)
-    //   const pathCheck = fs.existsSync(checkPath);
-    //   console.log("exists or not",pathCheck);
-    //   if(!pathCheck){
-    //     console.log("DELETE -> ",checkPath);
-    //     const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-    //     try {
-    //       if (!fileExtensionRegex.test(checkPath)) {
-    //         // fs.rmSync(file, { recursive:true });
-    //       } else {
-    //         // fs.unlinkSync(checkPath);
-    //       }
-    //     } catch (error) {
-          
-    //     }
-    //   }
-    // }))
 
   }
-
-  async deleteWasteFilesInStaging(){
-    var stagedDirectoryFiles = await this.stagedDirectoryFiles();
-    stagedDirectoryFiles?.forEach((file => {
-      const a = file.substring(this.stagingPath.length);
-      const checkPath = path.join(this.cwd,a);
-      if(!fs.existsSync(checkPath)){
-        var  hasExtension: boolean | string = file.includes('.') && file.endsWith('.');
-        const stats="";
-               if (stats) { 
-              hasExtension = 'file'
-                } else {
-                      hasExtension = 'directory'
-                }
-        if (hasExtension==="file") {
-          fs.unlinkSync(checkPath);
-        } else if (hasExtension==="directory") {
-          fs.rmSync(file, { recursive: true, force: true });
-        } 
-      }
-    }))
-  }
-
 
 
   async status() {
@@ -541,7 +494,6 @@ class Gitpulse {
       const newCommitId = randomBytes.toString('hex');
       fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
       
-      ////////////////////////////////////////////////////////////////
       const newCommitIdpath = path.join(this.objPath,newCommitId);
       fs.mkdirSync(newCommitIdpath);
       fs.mkdirSync(path.join(newCommitIdpath,"mdf"));
@@ -588,10 +540,6 @@ class Gitpulse {
               }
             });
           });
- 
-
-
-
 
 
         }
@@ -624,7 +572,7 @@ class Gitpulse {
     if(branch==="main"){
       let data = fs.readFileSync(this.commitsPath,"utf-8");
       let show = data.split("\n").filter(line=>line!=="").reverse();
-      console.log(clc.bgWhite(clc.black(`Commit logs for Tree/${branch}`)));
+      console.log(clc.bgWhite(clc.black(`Commit logs for ${clc.red("Tree")}/${clc.green(`${branch}`)}`)));
       show.forEach((data)=>{
         const m  =data.split(":");
         const gmtIndex = m[4].indexOf("GMT"); 
@@ -640,7 +588,111 @@ class Gitpulse {
 
 
 
+  async migrateToCommitInMain(commitId:string){
+    const migPath = path.join(this.cwd)
+    const dfiles = await this.extractTopLevelDirectories();
+    console.log("D",dfiles)
+    try {
+      dfiles.forEach(async(del)=>{
+        fsExtra.removeSync(del);
+      })
+      await this.copyDirectory(path.join(this.objPath,"init"),migPath);
+      console.log(path.join(this.objPath,"init"),migPath);
+      // return;
+    } catch (error) {
+      console.log("ERROR",error);
+    }
+    if(commitId==="init"){
+      return;
+    }
+    const commitDataPath: string = fs.readFileSync(this.commitsPath, "utf-8");
+    const lines = commitDataPath.split('\n').filter(line => line !== '').reverse();
+    lines.pop();
+    lines.forEach((id)=>{
+          const finalId = id.indexOf(":");
+          console.log("ID",id.substring(finalId+1,finalId+41))
+          const idc = id.substring(finalId+1,finalId+41)
+          const addFilePath = path.join(this.objPath,idc,"ad.txt");
+          console.log(addFilePath);
+          let addedFiles = fs.readFileSync(addFilePath,"utf-8");
+          const addedFilesArray = addedFiles.split("\n").filter(line => line !== '');
+          addedFilesArray.forEach((file)=>{
+            
+            const fileName = file.substring(this.cwd.length);
+            const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+            console.log("File to add ->",path.join(migPath,fileName));
+            try {
+              if (!fileExtensionRegex.test(fileName)) {
+                fs.mkdirSync(path.join(migPath,fileName))
+              } else {
+                fs.writeFileSync(path.join(migPath,fileName),"")
+              }
+            } catch (error) {
+              
+            }
+          })
 
+
+          const deleteFilePath = path.join(this.objPath,idc,"rm.txt");
+          let deletedFiles = fs.readFileSync(deleteFilePath,"utf-8");
+          const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
+
+          deletedFilesArray.forEach((file)=>{
+            const fileName = file.substring(this.cwd.length);
+            const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+            if (!fileExtensionRegex.test(fileName)) {
+              console.log("DEL dir",fileName)
+              fs.promises.rm(path.join(migPath,fileName),{recursive:true,force:true})
+            } else {
+              console.log("DEL file",fileName);
+              fs.unlinkSync(path.join(migPath,fileName))
+            }
+          })
+
+          const mdfPath = path.join(this.objPath,idc,"mdf"); 
+          // console.log("->>>>",mdfPath);
+          // return;
+          
+          fs.readdir(mdfPath,(err,files)=>{
+                  if(files.length===0){
+                  return;
+                  }
+                  files.forEach((file)=>{
+                  const pathC = path.join(mdfPath,file);
+                  console.log("PATHC",pathC);
+                  const compressedData = fs.readFileSync(pathC);
+                  const decompressedData = zlib.gunzipSync(compressedData);
+                  const content = decompressedData.toString('utf8');
+                  const newlineIndex = content.indexOf('\n');
+                  if (newlineIndex === -1) {
+                  }
+                  const firstLine = content.substring(0, newlineIndex);
+                  const remainingContent = content.substring(newlineIndex + 1);
+                  const filePath = firstLine.substring(this.cwd.length);
+                  fs.writeFileSync(path.join(migPath,filePath),remainingContent);
+                  // console.log("F","R",remainingContent);
+                })
+              
+        })
+      }
+    )
+  }
+
+
+    async extractTopLevelDirectories():Promise<string[]>{
+    return new Promise(resolve=>{
+      const read = fs.readdir(this.cwd,(err,files)=>{
+        if(err){
+          console.log(err) ;
+        }
+        const filesR= files;
+        const fullPaths = files
+        .filter(file => !file.includes("sloth") && !file.includes(".git")) // Exclude specific files or directories
+        .map(file => path.join(this.cwd, file)); 
+        return resolve(fullPaths);
+      })
+    })
+    }
 
   async copyDirectory(sourceDir: string, destDir: string): Promise<void> {
     try {
@@ -702,6 +754,19 @@ program
       console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
     }
   });
+
+  program
+  .command('migrate <commitId>')
+  .description('Go back to previous commit')
+  .action((commitId) => {
+    gitpulse = Gitpulse.loadFromConfig();
+    if (gitpulse) {
+      gitpulse.migrateToCommitInMain(commitId);
+    } else {
+      console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
+    }
+  });
+
 
 
 program
