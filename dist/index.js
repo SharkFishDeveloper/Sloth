@@ -45,6 +45,7 @@ const cli_color_1 = __importDefault(require("cli-color"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const klaw_1 = __importDefault(require("klaw"));
 const zlib_1 = __importDefault(require("zlib"));
+// import linereader from "line-reader"
 var configPath = path_1.default.join(process.cwd(), "/.gitpulse/config.json");
 class Gitpulse {
     constructor() {
@@ -55,7 +56,7 @@ class Gitpulse {
         this.commitsPath = "";
         this.configPath = "";
         this.head = "";
-        this.current = "";
+        this.currentHead = "";
         this.cwd = "";
         this.rootpath = path_1.default.join(process.cwd());
         this.gitpath = path_1.default.join(this.rootpath, ".gitpulse");
@@ -63,7 +64,7 @@ class Gitpulse {
         this.stagingPath = path_1.default.join(this.gitpath, "staging");
         this.commitsPath = path_1.default.join(this.gitpath, "commits.txt");
         this.head = path_1.default.join(this.gitpath, "HEAD.txt");
-        this.current = path_1.default.join(this.gitpath, "CURRENT.txt");
+        this.currentHead = path_1.default.join(this.gitpath, "CURRENT.txt");
         if (!fs_1.default.existsSync(path_1.default.join(this.gitpath))) {
             console.log("No git directory exists");
         }
@@ -80,14 +81,11 @@ class Gitpulse {
                     });
                     fs_1.default.writeFileSync(this.commitsPath, "");
                     fs_1.default.writeFileSync(this.head, "");
-                    fs_1.default.writeFileSync(this.current, "");
+                    fs_1.default.writeFileSync(this.currentHead, "");
                     fs_1.default.mkdir(this.stagingPath, { recursive: true }, (err) => {
                         console.log(err);
                     });
                     fs_1.default.mkdir(path_1.default.join(this.objPath, "init"), { recursive: true }, (err) => {
-                        console.log(err);
-                    });
-                    fs_1.default.mkdir(path_1.default.join(this.gitpath, "diff"), { recursive: true }, (err) => {
                         console.log(err);
                     });
                     fs_1.default.mkdir(`${this.objPath}/init`, { recursive: true }, (err) => {
@@ -351,7 +349,7 @@ class Gitpulse {
             const pathStage = [];
             const stagedFiles = [];
             if (lines.length === 0) {
-                console.log("Hey", commitDataPath);
+                console.log(commitDataPath);
                 try {
                     const files = yield new Promise((resolve, reject) => {
                         fs_1.default.readdir(this.stagingPath, (err, files) => {
@@ -376,7 +374,9 @@ class Gitpulse {
                         .then(() => console.log(''))
                         .catch(err => console.error('Error during copy operation:', err));
                 }));
-                fs_1.default.writeFileSync(this.commitsPath, `\${message}:init:${new Date()}`);
+                fs_1.default.writeFileSync(this.commitsPath, `\n${message}:init:${new Date()}`);
+                fs_1.default.writeFileSync(this.head, "init");
+                fs_1.default.writeFileSync(this.currentHead, "init");
             }
             //START FROM HERE
             else if (lines.length == 1) {
@@ -387,7 +387,6 @@ class Gitpulse {
                 fs_1.default.mkdirSync(path_1.default.join(newCommitIdpath, "mdf"));
                 fs_1.default.writeFileSync(path_1.default.join(newCommitIdpath, "ad.txt"), "");
                 fs_1.default.writeFileSync(path_1.default.join(newCommitIdpath, "rm.txt"), "");
-                fs_1.default.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
                 try {
                     const result = yield dirCompare.compare(this.stagingPath, path_1.default.join(this.objPath, "init"), { compareContent: true });
                     const modifiedFiles = [];
@@ -453,13 +452,21 @@ class Gitpulse {
                 catch (error) {
                     console.error("Error comparing directories:", error);
                 }
+                fs_1.default.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
+                fs_1.default.writeFileSync(this.head, newCommitId);
+                fs_1.default.writeFileSync(this.currentHead, newCommitId);
             }
             else if (lines.length >= 2) {
+                fs_1.default.mkdir(path_1.default.join(this.gitpath, "diff"), { recursive: true }, (err) => {
+                    console.log(err);
+                });
                 ////////////////////////////////////////////////////////////////
                 console.log("I am working");
                 yield this.copyDirectory(path_1.default.join(this.objPath, "init"), path_1.default.join(this.gitpath, "diff"));
-                let reverseCommitsId = lines.reverse();
-                reverseCommitsId.pop();
+                const arr = lines;
+                arr.shift();
+                let reverseCommitsId = arr;
+                // reverseCommitsId.pop(); 
                 reverseCommitsId.forEach((id) => {
                     const startI = id.indexOf(":") + 1;
                     const endI = 40 + id.indexOf(":") + 1;
@@ -467,6 +474,8 @@ class Gitpulse {
                     const addFilePath = path_1.default.join(this.objPath, id, "ad.txt");
                     let addedFiles = fs_1.default.readFileSync(addFilePath, "utf-8");
                     const addedFilesArray = addedFiles.split("\n").filter(line => line !== '');
+                    const deleteFilePath = path_1.default.join(this.objPath, id, "rm.txt");
+                    let deletedFiles = fs_1.default.readFileSync(deleteFilePath, "utf-8");
                     addedFilesArray.forEach((file) => {
                         const fileName = file.substring(this.cwd.length);
                         const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
@@ -481,8 +490,6 @@ class Gitpulse {
                         catch (error) {
                         }
                     });
-                    const deleteFilePath = path_1.default.join(this.objPath, id, "rm.txt");
-                    let deletedFiles = fs_1.default.readFileSync(deleteFilePath, "utf-8");
                     const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
                     deletedFilesArray.forEach((file) => {
                         const fileName = file.substring(this.cwd.length);
@@ -496,14 +503,19 @@ class Gitpulse {
                             fs_1.default.unlinkSync(path_1.default.join(this.gitpath, "diff", fileName));
                         }
                     });
+                    var filesCount;
                     const mdfPath = path_1.default.join(this.objPath, id, "mdf");
                     fs_1.default.readdir(mdfPath, (err, files) => {
                         if (files.length === 0) {
+                            filesCount = 0;
+                            //&& addedFilesArray.length===0 && deletedFilesArray.length===0
                             return;
                         }
                         files.forEach((file) => {
                             const pathC = path_1.default.join(mdfPath, file);
                             const compressedData = fs_1.default.readFileSync(pathC);
+                            // const apth = `${path.join(a, diff.name1 as string)}\n${readingStg}`
+                            //!`${path.join(a, diff.name1 as string)}\n${readingStg}`
                             const decompressedData = zlib_1.default.gunzipSync(compressedData);
                             const content = decompressedData.toString('utf8');
                             const newlineIndex = content.indexOf('\n');
@@ -516,21 +528,27 @@ class Gitpulse {
                             console.log("F", "R", remainingContent);
                         });
                     });
+                    if (filesCount === 0 && addedFilesArray.length === 0 && deletedFilesArray.length === 0) {
+                        return console.log(cli_color_1.default.greenBright("Nothing to commit,working tree clean"));
+                    }
                 });
                 const randomBytes = crypto_1.default.randomBytes(20);
                 const newCommitId = randomBytes.toString('hex');
-                fs_1.default.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
                 const newCommitIdpath = path_1.default.join(this.objPath, newCommitId);
                 fs_1.default.mkdirSync(newCommitIdpath);
                 fs_1.default.mkdirSync(path_1.default.join(newCommitIdpath, "mdf"));
                 fs_1.default.writeFileSync(path_1.default.join(newCommitIdpath, "ad.txt"), "");
                 fs_1.default.writeFileSync(path_1.default.join(newCommitIdpath, "rm.txt"), "");
-                this.commpare2directoriesDiff(path_1.default.join(this.stagingPath, "/"), path_1.default.join(this.gitpath, "diff", "/"), newCommitId);
-                fs_1.default.promises.rmdir(path_1.default.join(this.gitpath, "diff"));
+                yield this.commpare2directoriesDiff(path_1.default.join(this.stagingPath, "/"), path_1.default.join(this.gitpath, "diff", "/"), newCommitId, message);
+                // fs.promises.rmdir(path.join(this.gitpath,"diff"))
+                fs_1.default.writeFileSync(this.head, newCommitId);
+                fs_1.default.writeFileSync(this.currentHead, newCommitId);
+                fs_extra_1.default.remove(path_1.default.join(this.gitpath, "diff"));
+                // fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
             }
         });
     }
-    commpare2directoriesDiff(sourceDir, outDir, newCommitId) {
+    commpare2directoriesDiff(sourceDir, outDir, newCommitId, message) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const modifiedFiles = [];
@@ -547,8 +565,12 @@ class Gitpulse {
                         diffpath1 = diffpath1.substring(this.stagingPath.length);
                         modifiedFiles.push(path_1.default.join(this.cwd, diffpath1, diff.name1));
                         const stagedPathtoread = path_1.default.join(this.stagingPath, diffpath1, diff.name1);
-                        const data = fs_1.default.readFileSync(stagedPathtoread, "utf-8");
-                        console.log("MODdata", data);
+                        let data = fs_1.default.readFileSync(stagedPathtoread, "utf-8");
+                        let apth = stagedPathtoread.substring(this.stagingPath.length);
+                        apth = path_1.default.join(this.cwd, apth);
+                        data = `${apth}\n${data}`;
+                        console.log("MODdata====>", "\n", data);
+                        // return;
                         zlib_1.default.gzip(data, (err, compressedData) => {
                             if (err) {
                                 console.error('Error compressing data:', err);
@@ -581,17 +603,26 @@ class Gitpulse {
                         fs_1.default.appendFileSync(path_1.default.join(objpath, "rm.txt"), `\n${pushedFile}`);
                     }
                 });
+                if (modifiedFiles.length === 0 && addedFiles.length === 0 && deletedFiles.length === 0) {
+                    const newCommitIdpath = path_1.default.join(this.objPath, newCommitId);
+                    fs_extra_1.default.remove(newCommitIdpath);
+                    return console.log(cli_color_1.default.green("Working tree clean, nothing to commit"));
+                }
+                fs_1.default.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
                 console.log("MODIFIED FILES", modifiedFiles);
                 console.log("ADDED FILES", addedFiles);
                 console.log("DELETED FILES", deletedFiles);
             }
             catch (error) {
+                const newCommitIdpath = path_1.default.join(this.objPath, newCommitId);
+                fs_extra_1.default.remove(newCommitIdpath);
                 console.log("Derror", error);
             }
         });
     }
     log(branch) {
         if (branch === "main") {
+            let currentHead = fs_1.default.readFileSync(this.currentHead, "utf-8").trim();
             let data = fs_1.default.readFileSync(this.commitsPath, "utf-8");
             let show = data.split("\n").filter(line => line !== "").reverse();
             console.log(cli_color_1.default.bgWhite(cli_color_1.default.black(`Commit logs for ${cli_color_1.default.red("Tree")}/${cli_color_1.default.green(`${branch}`)}`)));
@@ -599,7 +630,10 @@ class Gitpulse {
                 const m = data.split(":");
                 const gmtIndex = m[4].indexOf("GMT");
                 const time = m[2] + ":" + m[3] + ":" + m[4].substring(0, gmtIndex);
-                console.log(cli_color_1.default.yellow("message ->"), m[0], "\t", cli_color_1.default.whiteBright("ID ->"), m[1], "\n", cli_color_1.default.yellow("Commited on ->", time));
+                console.log(`${cli_color_1.default.yellow("message ->")} ${m[0]}\t` +
+                    `${cli_color_1.default.whiteBright("ID ->")} ${m[1]} ` +
+                    `${m[1] === currentHead ? cli_color_1.default.green("<- CURRENT-HEAD") : ''}\n` +
+                    `${cli_color_1.default.yellow("Commited on ->")} ${time}`);
             });
             console.log(cli_color_1.default.bgWhite(cli_color_1.default.black(`<- END ->`)));
         }
@@ -609,6 +643,10 @@ class Gitpulse {
     }
     migrateToCommitInMain(commitId) {
         return __awaiter(this, void 0, void 0, function* () {
+            const current = fs_1.default.readFileSync(this.currentHead, "utf-8");
+            if (current === commitId) {
+                // return console.log(clc.greenBright(`You are already on ${commitId}`)); 
+            }
             const migPath = path_1.default.join(this.cwd);
             const dfiles = yield this.extractTopLevelDirectories();
             console.log("D", dfiles);
@@ -627,14 +665,23 @@ class Gitpulse {
                 return;
             }
             const commitDataPath = fs_1.default.readFileSync(this.commitsPath, "utf-8");
-            const lines = commitDataPath.split('\n').filter(line => line !== '').reverse();
-            lines.pop();
-            lines.forEach((id) => {
+            const lines = commitDataPath.split('\n').filter(line => line !== '');
+            lines.shift();
+            var Index = 5000000;
+            for (const [index, id] of lines.entries()) {
+                if (index > Index) {
+                    break;
+                }
                 const finalId = id.indexOf(":");
-                console.log("ID", id.substring(finalId + 1, finalId + 41));
-                const idc = id.substring(finalId + 1, finalId + 41);
+                const lastid = id.substring(finalId + 1, finalId + 41);
+                if (lastid === commitId) {
+                    Index = index;
+                    console.log(`Commit ID ${lastid} found at line ${index + 1}`);
+                }
+                console.log("ID", lastid);
+                const idc = lastid;
                 const addFilePath = path_1.default.join(this.objPath, idc, "ad.txt");
-                console.log(addFilePath);
+                console.log("ADDED FILE PATH", addFilePath);
                 let addedFiles = fs_1.default.readFileSync(addFilePath, "utf-8");
                 const addedFilesArray = addedFiles.split("\n").filter(line => line !== '');
                 addedFilesArray.forEach((file) => {
@@ -668,8 +715,6 @@ class Gitpulse {
                     }
                 });
                 const mdfPath = path_1.default.join(this.objPath, idc, "mdf");
-                // console.log("->>>>",mdfPath);
-                // return;
                 fs_1.default.readdir(mdfPath, (err, files) => {
                     if (files.length === 0) {
                         return;
@@ -680,17 +725,20 @@ class Gitpulse {
                         const compressedData = fs_1.default.readFileSync(pathC);
                         const decompressedData = zlib_1.default.gunzipSync(compressedData);
                         const content = decompressedData.toString('utf8');
+                        console.log("MOD content =>", content, "\n");
                         const newlineIndex = content.indexOf('\n');
                         if (newlineIndex === -1) {
                         }
                         const firstLine = content.substring(0, newlineIndex);
                         const remainingContent = content.substring(newlineIndex + 1);
                         const filePath = firstLine.substring(this.cwd.length);
-                        fs_1.default.writeFileSync(path_1.default.join(migPath, filePath), remainingContent);
+                        console.log(content, "firstLine", firstLine, "filePath", filePath);
+                        fs_1.default.writeFileSync(firstLine, remainingContent);
                         // console.log("F","R",remainingContent);
                     });
                 });
-            });
+            }
+            fs_1.default.writeFileSync(this.currentHead, commitId);
         });
     }
     extractTopLevelDirectories() {
@@ -702,7 +750,7 @@ class Gitpulse {
                     }
                     const filesR = files;
                     const fullPaths = files
-                        .filter(file => !file.includes("sloth") && !file.includes(".git")) // Exclude specific files or directories
+                        .filter(file => !file.includes("sloth") && !file.includes(".git"))
                         .map(file => path_1.default.join(this.cwd, file));
                     return resolve(fullPaths);
                 });

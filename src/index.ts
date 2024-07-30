@@ -6,9 +6,10 @@ import fs from "fs";
 import crypto from "crypto"
 import * as dirCompare from "dir-compare"
 import clc from "cli-color"
-import fsExtra from 'fs-extra';
+import fsExtra, { copySync } from 'fs-extra';
 import klaw from "klaw"
 import zlib from "zlib";
+import { convertChangesToDMP } from "diff";
 // import linereader from "line-reader"
 var configPath = path.join(process.cwd(), "/.gitpulse/config.json");
 
@@ -54,9 +55,7 @@ class Gitpulse {
         fs.mkdir(path.join(this.objPath,"init"), { recursive: true }, (err) => {
           console.log(err);
         });
-        fs.mkdir(path.join(this.gitpath,"diff"), { recursive: true }, (err) => {
-          console.log(err);
-        });
+
         fs.mkdir(`${this.objPath}/init`, { recursive: true }, (err) => {
           console.log(err);
         });
@@ -328,7 +327,7 @@ class Gitpulse {
     const stagedFiles: string[] | null = [];
 
     if (lines.length===0) {
-      console.log("Hey",commitDataPath)
+      console.log(commitDataPath)
       try {
         const files: string[] = await new Promise((resolve, reject) => {
           fs.readdir(this.stagingPath, (err, files) => {
@@ -351,7 +350,7 @@ class Gitpulse {
           .then(() => console.log(''))
           .catch(err => console.error('Error during copy operation:', err));
       })
-      fs.writeFileSync(this.commitsPath,`\${message}:init:${new Date()}`);
+      fs.writeFileSync(this.commitsPath,`\n${message}:init:${new Date()}`);
       fs.writeFileSync(this.head,"init");
       fs.writeFileSync(this.currentHead,"init");
     }
@@ -435,19 +434,29 @@ class Gitpulse {
     fs.writeFileSync(this.currentHead,newCommitId);
     }
     else if(lines.length>=2){
-
+        fs.mkdir(path.join(this.gitpath,"diff"), { recursive: true }, (err) => {
+          console.log(err);
+        });
     ////////////////////////////////////////////////////////////////
         console.log("I am working");
         await this.copyDirectory(path.join(this.objPath,"init"),path.join(this.gitpath,"diff"));
-        let reverseCommitsId = lines.reverse();
-        reverseCommitsId.pop(); 
+        const arr = lines;
+        arr.shift();
+        let reverseCommitsId = arr;
+        // reverseCommitsId.pop(); 
         reverseCommitsId.forEach((id)=>{
           const startI = id.indexOf(":")+1;
           const endI  = 40+id.indexOf(":")+1;
           id = id.substring(startI,endI);
+
+          
           const addFilePath = path.join(this.objPath,id,"ad.txt");
           let addedFiles = fs.readFileSync(addFilePath,"utf-8");
           const addedFilesArray = addedFiles.split("\n").filter(line => line !== '');
+
+          const deleteFilePath = path.join(this.objPath,id,"rm.txt");
+          let deletedFiles = fs.readFileSync(deleteFilePath,"utf-8");
+
           addedFilesArray.forEach((file)=>{
             
             const fileName = file.substring(this.cwd.length);
@@ -464,29 +473,33 @@ class Gitpulse {
           })
           
 
-          const deleteFilePath = path.join(this.objPath,id,"rm.txt");
-          let deletedFiles = fs.readFileSync(deleteFilePath,"utf-8");
+          
           const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
 
-          deletedFilesArray.forEach((file)=>{
-            const fileName = file.substring(this.cwd.length);
-            const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-            if (!fileExtensionRegex.test(fileName)) {
-              console.log("DEL dir",fileName)
-              fs.promises.rm(path.join(this.gitpath,"diff",fileName),{recursive:true,force:true})
-            } else {
-              console.log("DEL file",fileName);
-              fs.unlinkSync(path.join(this.gitpath,"diff",fileName))
-            }
-          })
-            const mdfPath = path.join(this.objPath,id,"mdf");          
-            fs.readdir(mdfPath,(err,files)=>{
-                if(files.length===0){
-                return;
+                deletedFilesArray.forEach((file)=>{
+                const fileName = file.substring(this.cwd.length);
+                const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+                if (!fileExtensionRegex.test(fileName)) {
+                  console.log("DEL dir",fileName)
+                  fs.promises.rm(path.join(this.gitpath,"diff",fileName),{recursive:true,force:true})
+                } else {
+                  console.log("DEL file",fileName);
+                  fs.unlinkSync(path.join(this.gitpath,"diff",fileName))
                 }
+              })    
+                  var filesCount ;
+                  const mdfPath = path.join(this.objPath,id,"mdf");          
+                    fs.readdir(mdfPath,(err,files)=>{
+                    if(files.length===0 ){
+                      filesCount=0;
+                      //&& addedFilesArray.length===0 && deletedFilesArray.length===0
+                    return ;
+                    }
                     files.forEach((file)=>{
                     const pathC = path.join(mdfPath,file);
                     const compressedData = fs.readFileSync(pathC);
+                    // const apth = `${path.join(a, diff.name1 as string)}\n${readingStg}`
+                    //!`${path.join(a, diff.name1 as string)}\n${readingStg}`
                     const decompressedData = zlib.gunzipSync(compressedData);
                     const content = decompressedData.toString('utf8');
                     const newlineIndex = content.indexOf('\n');
@@ -499,22 +512,27 @@ class Gitpulse {
                     console.log("F","R",remainingContent);
                   })
                 
-          })
+                })
+                if(filesCount===0 && addedFilesArray.length===0 && deletedFilesArray.length===0){
+                    return console.log(clc.greenBright("Nothing to commit,working tree clean"));
+                }
         })
       const randomBytes = crypto.randomBytes(20);
       const newCommitId = randomBytes.toString('hex');
-      fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
       
       const newCommitIdpath = path.join(this.objPath,newCommitId);
+
       fs.mkdirSync(newCommitIdpath);
       fs.mkdirSync(path.join(newCommitIdpath,"mdf"));
       fs.writeFileSync(path.join(newCommitIdpath,"ad.txt"),"");
       fs.writeFileSync(path.join(newCommitIdpath,"rm.txt"),"");
-
-      this.commpare2directoriesDiff(path.join(this.stagingPath,"/"),path.join(this.gitpath,"diff","/"),newCommitId);
-      fs.promises.rmdir(path.join(this.gitpath,"diff"))
+      
+      await this.commpare2directoriesDiff(path.join(this.stagingPath,"/"),path.join(this.gitpath,"diff","/"),newCommitId,message);
+      // fs.promises.rmdir(path.join(this.gitpath,"diff"))
       fs.writeFileSync(this.head,newCommitId);
       fs.writeFileSync(this.currentHead,newCommitId);
+      fsExtra.remove(path.join(this.gitpath,"diff"));
+      // fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
     }
   }
   
@@ -522,23 +540,32 @@ class Gitpulse {
 
 
 
-  async commpare2directoriesDiff(sourceDir:string,outDir:string,newCommitId:string){
+  async commpare2directoriesDiff(sourceDir:string,outDir:string,newCommitId:string,message:string){
     const modifiedFiles:string[]|null = [];
     const addedFiles:string[]|null = [];
     const deletedFiles:string[]|null = [];
     try {
+
+
+
       const difference = await dirCompare.compare(sourceDir,outDir,{compareContent:true})
       const objpath = path.join(this.objPath,newCommitId);
       console.log("SRC",sourceDir,"ROOT",outDir,"===>",objpath);
+
       difference.diffSet?.forEach((diff,index)=>{
         console.log("DIFF",diff.path1,diff.name1,diff.state)
+
         if(diff.state==="distinct" && diff.path1 && diff.name1){
           let diffpath1 = diff.path1; 
           diffpath1 = diffpath1.substring(this.stagingPath.length);
           modifiedFiles.push(path.join(this.cwd,diffpath1,diff.name1));
           const stagedPathtoread = path.join(this.stagingPath,diffpath1,diff.name1);
-          const data = fs.readFileSync(stagedPathtoread,"utf-8");
-          console.log("MODdata",data);
+          let data = fs.readFileSync(stagedPathtoread,"utf-8");
+          let apth = stagedPathtoread.substring(this.stagingPath.length)
+          apth = path.join(this.cwd,apth)
+          data = `${apth}\n${data}`
+          console.log("MODdata====>","\n",data);
+          // return;
           zlib.gzip(data, (err, compressedData) => {
             if (err) {
               console.error('Error compressing data:', err);
@@ -572,10 +599,18 @@ class Gitpulse {
           fs.appendFileSync(path.join(objpath, "rm.txt"),`\n${pushedFile}`)
         }
       })
+      if(modifiedFiles.length===0 && addedFiles.length===0 && deletedFiles.length===0){
+        const newCommitIdpath = path.join(this.objPath,newCommitId);
+        fsExtra.remove(newCommitIdpath);
+        return console.log(clc.green("Working tree clean, nothing to commit"))
+      }
+      fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
       console.log("MODIFIED FILES",modifiedFiles);
       console.log("ADDED FILES",addedFiles);
       console.log("DELETED FILES",deletedFiles);
     } catch (error) {
+      const newCommitIdpath = path.join(this.objPath,newCommitId);
+      fsExtra.remove(newCommitIdpath)
       console.log("Derror",error);
     }
   }
@@ -583,6 +618,7 @@ class Gitpulse {
 
   log(branch:string){
     if(branch==="main"){
+      let currentHead = fs.readFileSync(this.currentHead,"utf-8").trim();
       let data = fs.readFileSync(this.commitsPath,"utf-8");
       let show = data.split("\n").filter(line=>line!=="").reverse();
       console.log(clc.bgWhite(clc.black(`Commit logs for ${clc.red("Tree")}/${clc.green(`${branch}`)}`)));
@@ -590,7 +626,12 @@ class Gitpulse {
         const m  =data.split(":");
         const gmtIndex = m[4].indexOf("GMT"); 
         const time = m[2]+":"+m[3]+":"+m[4].substring(0,gmtIndex);
-        console.log(clc.yellow("message ->"),m[0],"\t",clc.whiteBright("ID ->"),m[1],"\n",clc.yellow("Commited on ->",time))
+        console.log(
+          `${clc.yellow("message ->")} ${m[0]}\t` +
+          `${clc.whiteBright("ID ->")} ${m[1]} ` +
+          `${m[1] === currentHead ? clc.green("<- CURRENT-HEAD") : ''}\n` +
+          `${clc.yellow("Commited on ->")} ${time}`
+        );
       })
       console.log(clc.bgWhite(clc.black(`<- END ->`)));
     }else{
@@ -604,7 +645,7 @@ class Gitpulse {
   async migrateToCommitInMain(commitId:string){
     const current = fs.readFileSync(this.currentHead,"utf-8");
     if(current === commitId){
-      return console.log(clc.greenBright(`You are already on ${commitId}`)); 
+      // return console.log(clc.greenBright(`You are already on ${commitId}`)); 
     }
     const migPath = path.join(this.cwd)
     const dfiles = await this.extractTopLevelDirectories();
@@ -623,14 +664,23 @@ class Gitpulse {
       return;
     }
     const commitDataPath: string = fs.readFileSync(this.commitsPath, "utf-8");
-    const lines = commitDataPath.split('\n').filter(line => line !== '').reverse();
-      lines.pop();
-      lines.forEach((id)=>{
+    const lines = commitDataPath.split('\n').filter(line => line !== '');
+        lines.shift();
+        var Index = 5000000;
+        for (const [index, id] of lines.entries()) {
+          if(index > Index){
+            break;
+          }
           const finalId = id.indexOf(":");
-          console.log("ID",id.substring(finalId+1,finalId+41))
-          const idc = id.substring(finalId+1,finalId+41)
+          const lastid = id.substring(finalId+1,finalId+41);
+          if(lastid===commitId){
+            Index = index;
+            console.log(`Commit ID ${lastid} found at line ${index+1}`);
+          }
+          console.log("ID",lastid)
+          const idc = lastid
           const addFilePath = path.join(this.objPath,idc,"ad.txt");
-          console.log(addFilePath);
+          console.log("ADDED FILE PATH",addFilePath);
           let addedFiles = fs.readFileSync(addFilePath,"utf-8");
           const addedFilesArray = addedFiles.split("\n").filter(line => line !== '');
           addedFilesArray.forEach((file)=>{
@@ -667,10 +717,7 @@ class Gitpulse {
           })
 
           const mdfPath = path.join(this.objPath,idc,"mdf"); 
-          // console.log("->>>>",mdfPath);
-          // return;
-          
-          fs.readdir(mdfPath,(err,files)=>{
+                fs.readdir(mdfPath,(err,files)=>{
                   if(files.length===0){
                   return;
                   }
@@ -680,19 +727,21 @@ class Gitpulse {
                   const compressedData = fs.readFileSync(pathC);
                   const decompressedData = zlib.gunzipSync(compressedData);
                   const content = decompressedData.toString('utf8');
+                  console.log("MOD content =>",content,"\n");
                   const newlineIndex = content.indexOf('\n');
                   if (newlineIndex === -1) {
                   }
                   const firstLine = content.substring(0, newlineIndex);
                   const remainingContent = content.substring(newlineIndex + 1);
                   const filePath = firstLine.substring(this.cwd.length);
-                  fs.writeFileSync(path.join(migPath,filePath),remainingContent);
+                  console.log(content,"firstLine",firstLine,"filePath",filePath);
+                  fs.writeFileSync(firstLine,remainingContent);
                   // console.log("F","R",remainingContent);
                 })
               
         })
       }
-    )
+    
     fs.writeFileSync(this.currentHead,commitId);
   }
 
