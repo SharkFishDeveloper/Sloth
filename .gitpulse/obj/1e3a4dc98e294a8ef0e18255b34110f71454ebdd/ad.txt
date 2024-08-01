@@ -1,0 +1,9 @@
+
+D:\Code-Forge\fuse\exam
+D:\Code-Forge\fuse\exam\exam1
+D:\Code-Forge\fuse\exam\exam1\1.txt
+D:\Code-Forge\fuse\exam\exam2
+D:\Code-Forge\fuse\exam\exam2\2.txt
+D:\Code-Forge\fuse\exam\exam3
+D:\Code-Forge\fuse\exam\exam3\3.txt
+D:\Code-Forge\fuse\exam\result.txt

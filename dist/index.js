@@ -91,13 +91,14 @@ class Gitpulse {
                     fs_1.default.mkdir(`${this.objPath}/init`, { recursive: true }, (err) => {
                         console.log(err);
                     });
-                    console.log(cli_color_1.default.bgBlue("Ininitialized empty .gitpulse successfully"));
+                    console.log(cli_color_1.default.bgGreenBright("Ininitialized empty .gitpulse successfully"));
                 }
                 catch (error) {
                     console.log(error);
                 }
             }
             else {
+                // console.log(clc.bgGreenBright(clc.black("Already ininitialized .gitpulse")));
                 // setInterval(() => this.deleteWasteFilesInStaging(), 15000);
                 // console.log(".gitpulse aleady exists");
             }
@@ -389,19 +390,55 @@ class Gitpulse {
                 fs_1.default.writeFileSync(path_1.default.join(newCommitIdpath, "rm.txt"), "");
                 try {
                     const result = yield dirCompare.compare(this.stagingPath, path_1.default.join(this.objPath, "init"), { compareContent: true });
-                    const modifiedFiles = [];
+                    var modifiedFiles = [];
                     const addedFiles = [];
                     const deletedFiles = [];
                     (_a = result.diffSet) === null || _a === void 0 ? void 0 : _a.forEach((diff, index) => {
-                        if (diff.state === "distinct") {
+                        if (diff.state === "left") {
+                            const isFile = (path) => /.+\.[a-zA-Z0-9]+$/.test(path);
+                            let diffpath1 = diff.path1;
+                            console.log("File PATH TO ADD FOCUS ON THIS ->", path_1.default.join(diffpath1, diff.name1));
+                            let initialName = path_1.default.join(diffpath1, diff.name1);
+                            if (isFile(initialName)) {
+                                console.log(`${path_1.default} is a file`);
+                                const fileData = fs_1.default.readFileSync(initialName, "utf-8");
+                                if (fileData !== "") {
+                                    let a = path_1.default.join(this.cwd, diffpath1.split("staging")[1]);
+                                    //a is final path
+                                    //diff path1 is staging file path
+                                    const data = `${path_1.default.join(a, diff.name1)}\n${fileData}`;
+                                    modifiedFiles === null || modifiedFiles === void 0 ? void 0 : modifiedFiles.push(path_1.default.join(a, diff.name1));
+                                    addedFiles === null || addedFiles === void 0 ? void 0 : addedFiles.push(path_1.default.join(a, diff.name1));
+                                    zlib_1.default.gzip(data, (err, compressedData) => {
+                                        if (err) {
+                                            console.error('Error compressing data:', err);
+                                            return;
+                                        }
+                                        const filePath = path_1.default.join(newCommitIdpath, "mdf", `${index}.txt.gz`);
+                                        fs_1.default.writeFile(filePath, compressedData, (err) => {
+                                            if (err) {
+                                                console.error('Error writing compressed data to file:', err);
+                                            }
+                                            else {
+                                                console.log('Compressed data successfully written to', filePath);
+                                            }
+                                        });
+                                    });
+                                }
+                            }
+                            else {
+                                console.log(`${path_1.default} is a directory`);
+                                let a = path_1.default.join(this.cwd, diffpath1.split("staging")[1]);
+                                addedFiles === null || addedFiles === void 0 ? void 0 : addedFiles.push(path_1.default.join(a, diff.name1));
+                                fs_1.default.appendFileSync(path_1.default.join(newCommitIdpath, "ad.txt"), `\n${path_1.default.join(a, diff.name1)}`);
+                            }
+                        }
+                        else if (diff.state === "distinct") {
                             let diffpath1 = diff.path1;
                             let a = path_1.default.join(this.cwd, diffpath1.split("staging")[1]);
-                            // console.log("@@@@@@@@@",path.join(diffpath1,diff.name1 as string))
                             try {
                                 const pathStaging = path_1.default.join(diff.path1, diff.name1);
                                 const pathObj = path_1.default.join(diff.path2, diff.name2);
-                                // console.log("=>>",pathStaging);
-                                // console.log("=>>",pathObj);
                                 const data1 = fs_1.default.readFileSync(pathStaging, "utf-8");
                                 const data2 = fs_1.default.readFileSync(pathObj, "utf-8");
                                 const readingStg = fs_1.default.readFileSync(path_1.default.join(diffpath1, diff.name1), "utf-8");
@@ -437,13 +474,6 @@ class Gitpulse {
                             deletedFiles === null || deletedFiles === void 0 ? void 0 : deletedFiles.push(path_1.default.join(a, diff.name2));
                             // console.log("Deleted files",path.join(diff.path2 as string,diff.name2 as string)); 
                         }
-                        else if (diff.state === "left") {
-                            let diffpath1 = diff.path1;
-                            let a = path_1.default.join(this.cwd, diffpath1.split("staging")[1]);
-                            addedFiles === null || addedFiles === void 0 ? void 0 : addedFiles.push(path_1.default.join(a, diff.name1));
-                            fs_1.default.appendFileSync(path_1.default.join(newCommitIdpath, "ad.txt"), `\n${path_1.default.join(a, diff.name1)}`);
-                            // console.log("Added files",path.join(diff.path1 as string,diff.name1 as string)); 
-                        }
                     });
                     console.log("M", modifiedFiles);
                     console.log("A", addedFiles);
@@ -460,7 +490,6 @@ class Gitpulse {
                 fs_1.default.mkdir(path_1.default.join(this.gitpath, "diff"), { recursive: true }, (err) => {
                     console.log(err);
                 });
-                ////////////////////////////////////////////////////////////////
                 console.log("I am working");
                 yield this.copyDirectory(path_1.default.join(this.objPath, "init"), path_1.default.join(this.gitpath, "diff"));
                 const arr = lines;
@@ -540,11 +569,9 @@ class Gitpulse {
                 fs_1.default.writeFileSync(path_1.default.join(newCommitIdpath, "ad.txt"), "");
                 fs_1.default.writeFileSync(path_1.default.join(newCommitIdpath, "rm.txt"), "");
                 yield this.commpare2directoriesDiff(path_1.default.join(this.stagingPath, "/"), path_1.default.join(this.gitpath, "diff", "/"), newCommitId, message);
-                // fs.promises.rmdir(path.join(this.gitpath,"diff"))
                 fs_1.default.writeFileSync(this.head, newCommitId);
                 fs_1.default.writeFileSync(this.currentHead, newCommitId);
                 fs_extra_1.default.remove(path_1.default.join(this.gitpath, "diff"));
-                // fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
             }
         });
     }
@@ -557,10 +584,46 @@ class Gitpulse {
             try {
                 const difference = yield dirCompare.compare(sourceDir, outDir, { compareContent: true });
                 const objpath = path_1.default.join(this.objPath, newCommitId);
-                console.log("SRC", sourceDir, "ROOT", outDir, "===>", objpath);
+                // console.log("SRC",sourceDir,"ROOT",outDir,"===>",objpath);
                 (_a = difference.diffSet) === null || _a === void 0 ? void 0 : _a.forEach((diff, index) => {
-                    console.log("DIFF", diff.path1, diff.name1, diff.state);
-                    if (diff.state === "distinct" && diff.path1 && diff.name1) {
+                    if (diff.state === "left" && diff.path1 && diff.name1) {
+                        let diffpath1 = diff.path1;
+                        let a = path_1.default.join(this.cwd, diffpath1.split("staging")[1]);
+                        const isFile = (path) => /.+\.[a-zA-Z0-9]+$/.test(path);
+                        console.log("DIFFPATH1", diffpath1);
+                        let initialName = path_1.default.join(diffpath1, diff.name1);
+                        if (isFile(initialName)) {
+                            console.log("IT is a file", initialName);
+                            const initialdata = fs_1.default.readFileSync(initialName, "utf-8");
+                            const data = `${path_1.default.join(a, diff.name1)}\n${initialdata}`;
+                            zlib_1.default.gzip(data, (err, compressedData) => {
+                                if (err) {
+                                    console.error('Error compressing data:', err);
+                                    return;
+                                }
+                                const filePath = path_1.default.join(objpath, "mdf", `${index}.txt.gz`);
+                                fs_1.default.writeFile(filePath, compressedData, (err) => {
+                                    if (err) {
+                                        // console.error('Error writing compressed data to file:', err);
+                                    }
+                                    else {
+                                        // console.log('Compressed data successfully written to', filePath);
+                                    }
+                                });
+                            });
+                            diffpath1 = diffpath1.substring(this.stagingPath.length);
+                            const pushedFile = path_1.default.join(this.cwd, diffpath1, diff.name1);
+                            addedFiles.push(pushedFile);
+                            fs_1.default.appendFileSync(path_1.default.join(objpath, "ad.txt"), `\n${pushedFile}`);
+                        }
+                        else {
+                            diffpath1 = diffpath1.substring(this.stagingPath.length);
+                            const pushedFile = path_1.default.join(this.cwd, diffpath1, diff.name1);
+                            addedFiles.push(pushedFile);
+                            fs_1.default.appendFileSync(path_1.default.join(objpath, "ad.txt"), `\n${pushedFile}`);
+                        }
+                    }
+                    else if (diff.state === "distinct" && diff.path1 && diff.name1) {
                         let diffpath1 = diff.path1;
                         diffpath1 = diffpath1.substring(this.stagingPath.length);
                         modifiedFiles.push(path_1.default.join(this.cwd, diffpath1, diff.name1));
@@ -569,8 +632,6 @@ class Gitpulse {
                         let apth = stagedPathtoread.substring(this.stagingPath.length);
                         apth = path_1.default.join(this.cwd, apth);
                         data = `${apth}\n${data}`;
-                        console.log("MODdata====>", "\n", data);
-                        // return;
                         zlib_1.default.gzip(data, (err, compressedData) => {
                             if (err) {
                                 console.error('Error compressing data:', err);
@@ -579,20 +640,13 @@ class Gitpulse {
                             const filePath = path_1.default.join(objpath, "mdf", `${index}.txt.gz`);
                             fs_1.default.writeFile(filePath, compressedData, (err) => {
                                 if (err) {
-                                    console.error('Error writing compressed data to file:', err);
+                                    // console.error('Error writing compressed data to file:', err);
                                 }
                                 else {
-                                    console.log('Compressed data successfully written to', filePath);
+                                    // console.log('Compressed data successfully written to', filePath);
                                 }
                             });
                         });
-                    }
-                    else if (diff.state === "left" && diff.path1 && diff.name1) {
-                        let diffpath1 = diff.path1;
-                        diffpath1 = diffpath1.substring(this.stagingPath.length);
-                        const pushedFile = path_1.default.join(this.cwd, diffpath1, diff.name1);
-                        addedFiles.push(pushedFile);
-                        fs_1.default.appendFileSync(path_1.default.join(objpath, "ad.txt"), `\n${pushedFile}`);
                     }
                     else if (diff.state === "right" && diff.path2 && diff.name2) {
                         let diffpath2 = diff.path2;
@@ -609,9 +663,9 @@ class Gitpulse {
                     return console.log(cli_color_1.default.green("Working tree clean, nothing to commit"));
                 }
                 fs_1.default.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
-                console.log("MODIFIED FILES", modifiedFiles);
-                console.log("ADDED FILES", addedFiles);
-                console.log("DELETED FILES", deletedFiles);
+                // console.log("MODIFIED FILES",modifiedFiles);
+                // console.log("ADDED FILES",addedFiles);
+                // console.log("DELETED FILES",deletedFiles);
             }
             catch (error) {
                 const newCommitIdpath = path_1.default.join(this.objPath, newCommitId);
@@ -645,7 +699,7 @@ class Gitpulse {
         return __awaiter(this, void 0, void 0, function* () {
             const current = fs_1.default.readFileSync(this.currentHead, "utf-8");
             if (current === commitId) {
-                // return console.log(clc.greenBright(`You are already on ${commitId}`)); 
+                return console.log(cli_color_1.default.greenBright(`You are already on ${commitId}`));
             }
             const migPath = path_1.default.join(this.cwd);
             const dfiles = yield this.extractTopLevelDirectories();
@@ -662,6 +716,7 @@ class Gitpulse {
                 console.log("ERROR", error);
             }
             if (commitId === "init") {
+                fs_1.default.writeFileSync(this.currentHead, commitId);
                 return;
             }
             const commitDataPath = fs_1.default.readFileSync(this.commitsPath, "utf-8");
@@ -670,6 +725,7 @@ class Gitpulse {
             var Index = 5000000;
             for (const [index, id] of lines.entries()) {
                 if (index > Index) {
+                    fs_1.default.writeFileSync(this.currentHead, commitId);
                     break;
                 }
                 const finalId = id.indexOf(":");
@@ -771,6 +827,46 @@ class Gitpulse {
             }
         });
     }
+    deleteCommitFromMain(commitid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const commits = fs_1.default.readFileSync(this.commitsPath, "utf-8");
+            const commitArray = commits.split("\n").filter(line => line !== "");
+            // const reverseCommitArray = commitArray.reverse();
+            // commitArray.pop();
+            console.log("commits", commits);
+            var commitDelete = [];
+            var commitDeleteFilesReverse = [];
+            for (let i = 0; i < commitArray.length; i++) {
+                const id = commitArray[i];
+                const lindex = id.indexOf(":");
+                const idCorrected = id.substring(lindex + 1, lindex + 41);
+                // const rid = commitArray[commitArray.length - i];
+                // const r = rid.indexOf(":");
+                // const idRenoedCorrected = rid.substring(r + 1, r + 41);
+                if (idCorrected === commitid) {
+                    console.log("We meet", commitid, ">>", idCorrected, "INDEX", i + 1);
+                    break;
+                }
+                else {
+                    try {
+                        commitDeleteFilesReverse.push(path_1.default.join(commitArray[commitArray.length - i + 1]));
+                        // console.log("RMEOVE->",(path.join(commitArray[commitArray.length - i])));
+                        commitDelete.push(commitArray[i]);
+                        // fsExtra.remove(path.join(this.objPath,));
+                    }
+                    catch (error) {
+                    }
+                }
+                console.log("DELETE FILES->", commitDeleteFilesReverse);
+            }
+            const commitsText = commitDelete.join('\n');
+            try {
+                // fs.writeFileSync(this.commitsPath,commitsText);
+            }
+            catch (error) {
+            }
+        });
+    }
 }
 exports.default = Gitpulse;
 function createHash({ data = "" }) {
@@ -819,6 +915,19 @@ program
     gitpulse = Gitpulse.loadFromConfig();
     if (gitpulse) {
         gitpulse.migrateToCommitInMain(commitId);
+    }
+    else {
+        console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
+    }
+});
+program
+    .command('delete <commitId>')
+    .description('Delete main commit')
+    .action((commitId) => {
+    gitpulse = Gitpulse.loadFromConfig();
+    if (gitpulse) {
+        // console.log("commitId",commitId);
+        gitpulse.deleteCommitFromMain(commitId);
     }
     else {
         console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
