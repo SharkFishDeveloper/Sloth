@@ -416,7 +416,7 @@ class Gitpulse {
                             if (isFile(initialName)) {
                                 console.log(`${path_1.default} is a file`);
                                 const fileData = fs_1.default.readFileSync(initialName, "utf-8");
-                                if (fileData !== "") {
+                                if (fileData !== null) {
                                     let a = path_1.default.join(this.cwd, diffpath1.split("staging")[1]);
                                     //a is final path
                                     //diff path1 is staging file path
@@ -439,6 +439,11 @@ class Gitpulse {
                                         });
                                         fs_1.default.appendFileSync(path_1.default.join(newCommitIdpath, "ad.txt"), `\n${path_1.default.join(a, diff.name1)}`);
                                     });
+                                }
+                                else if (fileData === null) {
+                                    let a = path_1.default.join(this.cwd, diffpath1.split("staging")[1]);
+                                    addedFiles === null || addedFiles === void 0 ? void 0 : addedFiles.push(path_1.default.join(a, diff.name1));
+                                    fs_1.default.appendFileSync(path_1.default.join(newCommitIdpath, "ad.txt"), `\n${path_1.default.join(a, diff.name1)}`);
                                 }
                             }
                             else {
