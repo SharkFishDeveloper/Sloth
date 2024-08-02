@@ -27,6 +27,7 @@ class Gitpulse {
   currentBranchName = "";
   mainCommitsIdOnly = "";
   initiaStartingTime = "";
+  branchingObjectsPath="";
 
   constructor() {
     this.rootpath = path.join(process.cwd());
@@ -40,6 +41,7 @@ class Gitpulse {
     this.currentBranchName = path.join(this.gitpath, "CURRENTBRANCH.txt");
     this.mainCommitsIdOnly = path.join(this.gitpath, "MAIN_COMMITS.txt");
     this.initiaStartingTime = path.join(this.gitpath, "INITIAL_TIME.txt");
+    this.branchingObjectsPath = path.join(this.gitpath, "Branch_modifications");
     
     if (!fs.existsSync(path.join(this.gitpath))) {
       console.log("No git directory exists");
@@ -58,6 +60,9 @@ class Gitpulse {
         fs.mkdir(path.join(this.gitpath,"cmpA"), { recursive: true }, (err) => {
           console.log(err);
         });
+        fs.mkdir(path.join(this.gitpath,"Branch_modifications"), { recursive: true }, (err) => {
+          console.log(err);
+        });
         fs.writeFileSync(this.commitsPath, "");
         fs.writeFileSync(this.head, "");
         fs.writeFileSync(this.currentHead, "");
@@ -74,7 +79,7 @@ class Gitpulse {
         fs.mkdir(`${this.objPath}/init`, { recursive: true }, (err) => {
           console.log(err);
         });
-        console.log(clc.bgGreenBright("Ininitialized empty .gitpulse successfully"));
+        console.log(clc.greenBright("Ininitialized empty .gitpulse successfully"));
       } catch (error) {
         console.log(error);
       }
@@ -331,6 +336,12 @@ class Gitpulse {
 
 
   async commit(message: string) {
+    const currentBranchName = fs.readFileSync(this.currentBranchName,"utf-8");
+    
+    if(currentBranchName!=="main"){
+      await this.branchCommits(message);
+      return;
+    }
     console.log("Commit Message : ", message);
     const commitDataPath: string = fs.readFileSync(this.commitsPath, "utf-8");
     // const commitDataMAIN: string = fs.readFileSync(this.mainCommitsIdOnly, "utf-8");
@@ -681,7 +692,7 @@ class Gitpulse {
           deletedFiles.push(pushedFile)
           fs.appendFileSync(path.join(objpath, "rm.txt"),`\n${pushedFile}`)
         }
-          })
+      })
           if(modifiedFiles.length===0 && addedFiles.length===0 && deletedFiles.length===0){
             const newCommitIdpath = path.join(this.objPath,newCommitId);
             fsExtra.remove(newCommitIdpath);
@@ -1022,6 +1033,131 @@ class Gitpulse {
     }
     // this.checkoutmore()
   } 
+
+  async branchCommits(message:string){
+    console.log("STARt");
+    const distPath = path.join(this.gitpath,"cmpA");//only change these names
+    const srcPath = path.join(this.stagingPath,"/");//only change these names
+    const randomBytes = crypto.randomBytes(20);
+    const newCommitId = randomBytes.toString('hex');//create 40 digit hash 
+    const difference =await dirCompare.compare(srcPath,distPath,{compareContent:true});
+
+    const addedFiles:string[]|null = [];
+    const modifiedFiles:string[]|null = [];
+    const deletedFiles:string[]|null = [];
+
+    const objpath = path.join(this.branchingObjectsPath,newCommitId);
+    fs.mkdirSync(objpath);
+    fs.mkdirSync(path.join(objpath,"mdf"));
+    fs.writeFileSync(path.join(objpath,"ad.txt"),"");
+    fs.writeFileSync(path.join(objpath,"rm.txt"),"");
+
+    
+      difference.diffSet?.forEach((diff,index)=>{
+        if(diff.state==="left" && diff.path1 && diff.name1){
+          console.log("DIFF",diff.path1,diff.name1);  
+        const stagingPath = path.join(diff.path1,diff.name1);
+        const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+        if (!fileExtensionRegex.test(stagingPath)) {
+          let a = diff.path1.substring(this.stagingPath.length);
+          fs.appendFileSync(path.join(objpath,"ad.txt"),`\n${path.join(this.cwd,a,diff.name1 as string)}`); 
+          addedFiles.push(path.join(this.cwd,a,diff.name1 as string));
+        }else{
+            const pathToReadData = fs.readFileSync(stagingPath,"utf-8");
+            let a = diff.path1.substring(this.stagingPath.length);
+            const data = `${path.join(a, diff.name1 as string)}\n${pathToReadData}`;
+            if(pathToReadData!==""){
+              zlib.gzip(data, (err, compressedData) => {
+                if (err) {
+                  console.error('Error compressing data:', err);
+                  return;
+                }
+                const filePath = path.join(objpath, "mdf", `${index}.txt.gz`);
+                fs.writeFile(filePath, compressedData, (err) => {
+                  if (err) {
+                    // console.error('Error writing compressed data to file:', err);
+                  } else {
+                    // console.log('Compressed data successfully written to', filePath);
+                    
+                  }
+                });
+                console.log("added files -> ",`\n${path.join(this.cwd,a,diff.name1 as string)}`)
+                fs.appendFileSync(path.join(objpath,"ad.txt"),`\n${path.join(this.cwd,a,diff.name1 as string)}`);
+                addedFiles.push(path.join(this.cwd,a,diff.name1 as string));
+              });
+            }
+            else{
+              fs.appendFileSync(path.join(objpath,"ad.txt"),`\n${path.join(this.cwd,a,diff.name1 as string)}`);
+              addedFiles.push(path.join(this.cwd,a,diff.name1 as string));
+            }
+          }
+        }
+        else if(diff.state === "distinct" && diff.path1 && diff.name1){
+          const stagingPath = path.join(diff.path1,diff.name1);
+          const pathToReadData = fs.readFileSync(stagingPath,"utf-8");
+          let a = diff.path1.substring(this.stagingPath.length);
+          const data = `${path.join(a, diff.name1 as string)}\n${pathToReadData}`;
+          zlib.gzip(data, (err, compressedData) => {
+            if (err) {
+              console.error('Error compressing data:', err);
+              return;
+            }
+            const filePath = path.join(objpath, "mdf", `${index}.txt.gz`);
+            fs.writeFile(filePath, compressedData, (err) => {
+              if (err) {
+                // console.error('Error writing compressed data to file:', err);
+              } else {
+                // console.log('Compressed data successfully written to', filePath);
+                
+              }
+            });
+            console.log("Mod files -> ",`\n${path.join(this.cwd,a,diff.name1 as string)}`)
+          });
+          modifiedFiles.push(path.join(this.cwd,a,diff.name1 as string));
+        }
+        else if(diff.state==="right" && diff.path2 && diff.name2){
+          let diffpath2 = diff.path2; 
+          let a = path.join(this.gitpath,"cmpA");
+          diffpath2 = diffpath2.substring(a.length);
+          const pushedFile = path.join(this.cwd,diffpath2,diff.name2)
+          const finalPath = path.join(diffpath2,diff.name2);
+          deletedFiles.push(pushedFile)
+          console.log("DEL",finalPath)
+          fs.appendFileSync(path.join(objpath, "rm.txt"),`\n${path.join(this.cwd,finalPath)}`)
+          deletedFiles.push(path.join(this.cwd,finalPath));
+        }
+    })
+    if(modifiedFiles.length === 0 && addedFiles.length===0 && deletedFiles.length===0){
+      try {
+        console.log(addedFiles,modifiedFiles,deletedFiles);
+       fsExtra.removeSync(objpath);
+       return console.log("Nothing to commit, working tree clean");
+      } catch (error) {
+       // console.log(error);
+      }
+     }else {
+      try {
+      console.log("Listen");
+      const jsonBranchData = fs.readFileSync(this.branchesPath,"utf-8");
+      const branchName = fs.readFileSync(this.currentBranchName,"utf-8");
+      let parsedJson:BranchInterface = JSON.parse(jsonBranchData);
+      parsedJson[branchName][newCommitId] = {
+        time: Date().toString(),
+        message: message
+      };
+      console.log(parsedJson);
+      fs.writeFileSync(this.branchesPath,JSON.stringify(parsedJson,null,2),"utf-8");
+      fsExtra.emptydirSync(distPath)
+      fs.writeFileSync(this.currentHead,newCommitId)
+      await this.copyDirectory(srcPath,distPath)
+      } catch (error) {
+        console.log("->",error);
+      }
+     }
+  }
+
+
+
   async checkoutToMain(commitId:string,pathName:string){
     fsExtra.removeSync(pathName);
     this.migrateToCommitInMain(commitId,pathName)

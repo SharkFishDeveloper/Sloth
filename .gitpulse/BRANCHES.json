@@ -1,52 +1,20 @@
 {
-  "f3": {
+  "f1": {
     "init": {
-      "time": "Fri Aug 02 2024 18:20",
-      "message": "MAINinitial"
-    }
-  },
-  "f0": {
-    "init": {
-      "time": "Fri Aug 02 2024 18:20",
-      "message": "initial"
+      "time": "Sat Aug 03 2024 00:32",
+      "message": "MAINfirst"
     },
-    "569485f619415ade709d15ede5e3ce6f271f6323": {
-      "time": "Fri Aug 02 2024 18:22",
-      "message": "MAINs"
-    }
-  },
-  "f01": {
-    "init": {
-      "time": "Fri Aug 02 2024 18:20",
-      "message": "initial"
+    "1dc227a477d59b0e3aae6726959832140389c4ad": {
+      "time": "Sat Aug 03 2024 00:34:06 GMT+0530 (India Standard Time)",
+      "message": "branchCommit-added-mul.txt-and-a.txt"
     },
-    "569485f619415ade709d15ede5e3ce6f271f6323": {
-      "time": "Fri Aug 02 2024 18:22",
-      "message": "MAINs"
-    }
-  },
-  "f99": {
-    "init": {
-      "time": "Fri Aug 02 2024 18:20",
-      "message": "initial"
+    "e0ed411133cf20b67a4e769faa80feb9947e7b4e": {
+      "time": "Sat Aug 03 2024 00:37:12 GMT+0530 (India Standard Time)",
+      "message": "deleted-a.txt"
     },
-    "569485f619415ade709d15ede5e3ce6f271f6323": {
-      "time": "Fri Aug 02 2024 18:22",
-      "message": "s"
-    },
-    "669cebf329c6e959ba81b2832fe39bfabdf877a4": {
-      "time": "Fri Aug 02 2024 20:03",
-      "message": "MAINmodi"
-    }
-  },
-  "again": {
-    "init": {
-      "time": "Fri Aug 02 2024 18:20",
-      "message": "initial"
-    },
-    "569485f619415ade709d15ede5e3ce6f271f6323": {
-      "time": "Fri Aug 02 2024 18:22",
-      "message": "MAINs"
+    "f6720cc93a7d13573974ee74b8cf584afc0d5067": {
+      "time": "Sat Aug 03 2024 00:42:10 GMT+0530 (India Standard Time)",
+      "message": "modified-mul.txt"
     }
   }
 }
