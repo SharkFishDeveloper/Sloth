@@ -742,8 +742,8 @@ class Gitpulse {
           fsExtra.removeSync(del);
         })
       }else{
-        console.log("RMEOVING cmpA");
-        fsExtra.emptyDir(srcDest);
+        console.log("Emptying cmpA");
+         fsExtra.mkdirSync(srcDest);
       }
       await this.copyDirectory(path.join(this.objPath,"init"),migPath);
       console.log(path.join(this.objPath,"init"),migPath);
@@ -751,7 +751,7 @@ class Gitpulse {
     } catch (error) {
       console.log("ERROR",error);
     }
-    if(commitId==="init" && !srcDest.includes("cmpA")){
+    if(commitId==="init" ){
       fs.writeFileSync(this.currentHead,commitId);
       return;
     }
@@ -759,9 +759,13 @@ class Gitpulse {
     const lines = commitDataPath.split('\n').filter(line => line !== '');
       //  if(!srcDest.includes("cmpA")){
         lines.shift();
+        // if(srcDest.includes("cmpA")){
+        //   lines.pop();
+        // }
       //  }
         var Index = 5000000;
         for (const [index, id] of lines.entries()) {
+          console.log("APPLYING CHANGES OF ->",id);
           if(index > Index){
             fs.writeFileSync(this.currentHead,commitId);
             break;
@@ -795,6 +799,41 @@ class Gitpulse {
           })
 
 
+          const mdfPath = path.join(this.objPath,idc,"mdf"); 
+          fs.readdir(mdfPath,(err,files)=>{
+            if(files.length===0){
+            return;
+            }
+            files.forEach((file)=>{
+            const pathC = path.join(mdfPath,file);
+            console.log("PATHC",pathC);
+            const compressedData = fs.readFileSync(pathC);
+            const decompressedData = zlib.gunzipSync(compressedData);
+            const content = decompressedData.toString('utf8');
+            console.log("MOD content =>",content,"\n");
+            const newlineIndex = content.indexOf('\n');
+            if (newlineIndex === -1) {
+            }
+            if(srcDest.includes("cmpA")){
+              const firstLine = content.substring(0, newlineIndex);
+              const remainingContent = content.substring(newlineIndex + 1);
+              let filePath = firstLine.substring(this.cwd.length);
+              // filePath = filePath.substring(this.cwd.length)
+              filePath = path.join(this.gitpath,"cmpA",filePath);
+              console.log("FILEPATH->",filePath,"firstLine",filePath);
+              fs.writeFileSync(filePath,remainingContent);
+            }
+            else{
+            const firstLine = content.substring(0, newlineIndex);
+            const remainingContent = content.substring(newlineIndex + 1);
+            const filePath = firstLine.substring(this.cwd.length);
+            console.log(content,"firstLine",firstLine,"filePath",filePath);
+            fs.writeFileSync(firstLine,remainingContent);
+            }
+          })
+        
+        })
+
           const deleteFilePath = path.join(this.objPath,idc,"rm.txt");
           let deletedFiles = fs.readFileSync(deleteFilePath,"utf-8");
           const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
@@ -813,40 +852,7 @@ class Gitpulse {
             }
           })
 
-          const mdfPath = path.join(this.objPath,idc,"mdf"); 
-                fs.readdir(mdfPath,(err,files)=>{
-                  if(files.length===0){
-                  return;
-                  }
-                  files.forEach((file)=>{
-                  const pathC = path.join(mdfPath,file);
-                  console.log("PATHC",pathC);
-                  const compressedData = fs.readFileSync(pathC);
-                  const decompressedData = zlib.gunzipSync(compressedData);
-                  const content = decompressedData.toString('utf8');
-                  console.log("MOD content =>",content,"\n");
-                  const newlineIndex = content.indexOf('\n');
-                  if (newlineIndex === -1) {
-                  }
-                  if(srcDest.includes("cmpA")){
-                    const firstLine = content.substring(0, newlineIndex);
-                    const remainingContent = content.substring(newlineIndex + 1);
-                    let filePath = firstLine.substring(this.cwd.length);
-                    // filePath = filePath.substring(this.cwd.length)
-                    filePath = path.join(this.gitpath,"cmpA",filePath);
-                    console.log("FILEPATH->",filePath,"firstLine",filePath);
-                    fs.writeFileSync(filePath,remainingContent);
-                  }
-                  else{
-                  const firstLine = content.substring(0, newlineIndex);
-                  const remainingContent = content.substring(newlineIndex + 1);
-                  const filePath = firstLine.substring(this.cwd.length);
-                  console.log(content,"firstLine",firstLine,"filePath",filePath);
-                  fs.writeFileSync(firstLine,remainingContent);
-                  }
-                })
-              
-        })
+
       }
     
     fs.writeFileSync(this.currentHead,commitId);
@@ -985,6 +991,7 @@ class Gitpulse {
         if(currentBranchName==="main"){
           this.checkoutToMain(currentHead,path.join(this.gitpath,"cmpA"));
         }
+        fs.writeFileSync(this.currentBranchName,`${branchName}`)
         return;
             // let obj:BranchInterface = {
       //   [`${branchName}`]:{
@@ -1016,6 +1023,7 @@ class Gitpulse {
     // this.checkoutmore()
   } 
   async checkoutToMain(commitId:string,pathName:string){
+    fsExtra.removeSync(pathName);
     this.migrateToCommitInMain(commitId,pathName)
   }
 }

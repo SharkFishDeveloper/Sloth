@@ -739,8 +739,8 @@ class Gitpulse {
                     }));
                 }
                 else {
-                    console.log("RMEOVING cmpA");
-                    fs_extra_1.default.emptyDir(srcDest);
+                    console.log("Emptying cmpA");
+                    fs_extra_1.default.mkdirSync(srcDest);
                 }
                 yield this.copyDirectory(path_1.default.join(this.objPath, "init"), migPath);
                 console.log(path_1.default.join(this.objPath, "init"), migPath);
@@ -749,7 +749,7 @@ class Gitpulse {
             catch (error) {
                 console.log("ERROR", error);
             }
-            if (commitId === "init" && !srcDest.includes("cmpA")) {
+            if (commitId === "init") {
                 fs_1.default.writeFileSync(this.currentHead, commitId);
                 return;
             }
@@ -757,9 +757,13 @@ class Gitpulse {
             const lines = commitDataPath.split('\n').filter(line => line !== '');
             //  if(!srcDest.includes("cmpA")){
             lines.shift();
+            // if(srcDest.includes("cmpA")){
+            //   lines.pop();
+            // }
             //  }
             var Index = 5000000;
             for (const [index, id] of lines.entries()) {
+                console.log("APPLYING CHANGES OF ->", id);
                 if (index > Index) {
                     fs_1.default.writeFileSync(this.currentHead, commitId);
                     break;
@@ -789,23 +793,6 @@ class Gitpulse {
                         }
                     }
                     catch (error) {
-                    }
-                });
-                const deleteFilePath = path_1.default.join(this.objPath, idc, "rm.txt");
-                let deletedFiles = fs_1.default.readFileSync(deleteFilePath, "utf-8");
-                const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
-                deletedFilesArray.forEach((file) => {
-                    console.log("ATTENTION HERE _ >>>>", file);
-                    const fileName = file.substring(this.cwd.length);
-                    const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-                    if (!fileExtensionRegex.test(fileName)) {
-                        console.log("DEL dir", fileName);
-                        fs_extra_1.default.remove(path_1.default.join(migPath, fileName));
-                        // fs.promises.rm(path.join(migPath,fileName),{recursive:true,force:true})
-                    }
-                    else {
-                        console.log("DEL file", fileName);
-                        fs_extra_1.default.remove(path_1.default.join(migPath, fileName));
                     }
                 });
                 const mdfPath = path_1.default.join(this.objPath, idc, "mdf");
@@ -840,6 +827,23 @@ class Gitpulse {
                             fs_1.default.writeFileSync(firstLine, remainingContent);
                         }
                     });
+                });
+                const deleteFilePath = path_1.default.join(this.objPath, idc, "rm.txt");
+                let deletedFiles = fs_1.default.readFileSync(deleteFilePath, "utf-8");
+                const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
+                deletedFilesArray.forEach((file) => {
+                    console.log("ATTENTION HERE _ >>>>", file);
+                    const fileName = file.substring(this.cwd.length);
+                    const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+                    if (!fileExtensionRegex.test(fileName)) {
+                        console.log("DEL dir", fileName);
+                        fs_extra_1.default.remove(path_1.default.join(migPath, fileName));
+                        // fs.promises.rm(path.join(migPath,fileName),{recursive:true,force:true})
+                    }
+                    else {
+                        console.log("DEL file", fileName);
+                        fs_extra_1.default.remove(path_1.default.join(migPath, fileName));
+                    }
                 });
             }
             fs_1.default.writeFileSync(this.currentHead, commitId);
@@ -981,6 +985,7 @@ class Gitpulse {
                 if (currentBranchName === "main") {
                     this.checkoutToMain(currentHead, path_1.default.join(this.gitpath, "cmpA"));
                 }
+                fs_1.default.writeFileSync(this.currentBranchName, `${branchName}`);
                 return;
                 // let obj:BranchInterface = {
                 //   [`${branchName}`]:{
@@ -1012,6 +1017,7 @@ class Gitpulse {
     }
     checkoutToMain(commitId, pathName) {
         return __awaiter(this, void 0, void 0, function* () {
+            fs_extra_1.default.removeSync(pathName);
             this.migrateToCommitInMain(commitId, pathName);
         });
     }
