@@ -55,6 +55,9 @@ class Gitpulse {
         fs.mkdir(this.gitpath, { recursive: true }, (err) => {
           console.log(err);
         });
+        fs.mkdir(path.join(this.gitpath,"cmpA"), { recursive: true }, (err) => {
+          console.log(err);
+        });
         fs.writeFileSync(this.commitsPath, "");
         fs.writeFileSync(this.head, "");
         fs.writeFileSync(this.currentHead, "");
@@ -361,7 +364,7 @@ class Gitpulse {
           .catch(err => console.error('Error during copy operation:', err));
       })
       fs.writeFileSync(this.commitsPath,`\n${message}:init:${new Date()}`);
-      fs.writeFileSync(this.mainCommitsIdOnly,`${message}`);
+      fs.writeFileSync(this.mainCommitsIdOnly,`init`);
       fs.writeFileSync(this.head,"init");
       fs.writeFileSync(this.currentHead,"init");
     }
@@ -481,7 +484,7 @@ class Gitpulse {
       console.error("Error comparing directories:", error);
     }
     fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
-    fs.appendFileSync(this.mainCommitsIdOnly, `${newCommitId}`);
+    fs.appendFileSync(this.mainCommitsIdOnly, `\n${newCommitId}`);
     fs.writeFileSync(this.head,newCommitId);
     fs.writeFileSync(this.currentHead,newCommitId);
     }
@@ -685,7 +688,7 @@ class Gitpulse {
             return console.log(clc.green("Working tree clean, nothing to commit"))
           }
           fs.appendFileSync(this.commitsPath, `\n${message}:${newCommitId}:${new Date()}`);
-          fs.appendFileSync(this.mainCommitsIdOnly, `${newCommitId}`);
+          fs.appendFileSync(this.mainCommitsIdOnly, `\n${newCommitId}`);
       // console.log("MODIFIED FILES",modifiedFiles);
       // console.log("ADDED FILES",addedFiles);
       // console.log("DELETED FILES",deletedFiles);
@@ -723,31 +726,40 @@ class Gitpulse {
 
 
 
-  async migrateToCommitInMain(commitId:string){
+  async migrateToCommitInMain(commitId:string,srcDest:string){
     const current = fs.readFileSync(this.currentHead,"utf-8");
-    if(current === commitId){
+    if(current === commitId && !srcDest.includes("cmpA")){
       return console.log(clc.greenBright(`You are already on ${commitId}`)); 
     }
-    const migPath = path.join(this.cwd)
+    const migPath = srcDest;
     const dfiles = await this.extractTopLevelDirectories();
     console.log("D",dfiles)
     try {
-      dfiles.forEach(async(del)=>{
-        fsExtra.removeSync(del);
-      })
+      if(!srcDest.includes("cmpA")){
+        console.log("RMEOVING DIRECTORUES");
+        // return;
+        dfiles.forEach(async(del)=>{
+          fsExtra.removeSync(del);
+        })
+      }else{
+        console.log("RMEOVING cmpA");
+        fsExtra.emptyDir(srcDest);
+      }
       await this.copyDirectory(path.join(this.objPath,"init"),migPath);
       console.log(path.join(this.objPath,"init"),migPath);
       // return;
     } catch (error) {
       console.log("ERROR",error);
     }
-    if(commitId==="init"){
+    if(commitId==="init" && !srcDest.includes("cmpA")){
       fs.writeFileSync(this.currentHead,commitId);
       return;
     }
     const commitDataPath: string = fs.readFileSync(this.commitsPath, "utf-8");
     const lines = commitDataPath.split('\n').filter(line => line !== '');
+      //  if(!srcDest.includes("cmpA")){
         lines.shift();
+      //  }
         var Index = 5000000;
         for (const [index, id] of lines.entries()) {
           if(index > Index){
@@ -816,12 +828,22 @@ class Gitpulse {
                   const newlineIndex = content.indexOf('\n');
                   if (newlineIndex === -1) {
                   }
+                  if(srcDest.includes("cmpA")){
+                    const firstLine = content.substring(0, newlineIndex);
+                    const remainingContent = content.substring(newlineIndex + 1);
+                    let filePath = firstLine.substring(this.cwd.length);
+                    // filePath = filePath.substring(this.cwd.length)
+                    filePath = path.join(this.gitpath,"cmpA",filePath);
+                    console.log("FILEPATH->",filePath,"firstLine",filePath);
+                    fs.writeFileSync(filePath,remainingContent);
+                  }
+                  else{
                   const firstLine = content.substring(0, newlineIndex);
                   const remainingContent = content.substring(newlineIndex + 1);
                   const filePath = firstLine.substring(this.cwd.length);
                   console.log(content,"firstLine",firstLine,"filePath",filePath);
                   fs.writeFileSync(firstLine,remainingContent);
-                  // console.log("F","R",remainingContent);
+                  }
                 })
               
         })
@@ -901,6 +923,8 @@ class Gitpulse {
     const currentBranchName = fs.readFileSync(this.currentBranchName,"utf-8");
     let mainCommitIds = fs.readFileSync(this.mainCommitsIdOnly,"utf-8");
     const mainIds = mainCommitIds.split("\n").filter(line=>line!=="");
+    const currentHead = fs.readFileSync(this.currentHead,"utf-8").trim()
+
     if(currentBranchName===branchName){
       return console.log(clc.blueBright(`You are already on ${branchName}`));
     }else if(mainIds.length===0 || mainIds[0]===""){
@@ -910,39 +934,90 @@ class Gitpulse {
       let branchcommitsHistory = fs.readFileSync(this.branchesPath,"utf-8"); 
       let parsedJSONdata: BranchInterface={};
       try {
-        if(parsedJSONdata===null){
+        if(parsedJSONdata!==null){
           parsedJSONdata = JSON.parse(branchcommitsHistory);
         }
         console.log("mainIds----------")
       } catch (err) {
-        console.error('Error parsing JSON:', err);
-        return;
+        //! log error here
+        // console.error('Error parsing JSON:', err);
+        // return;
       }
       if (parsedJSONdata!==null && parsedJSONdata[branchName]) {
         return console.log(clc.yellow("A branch with this name is already present"));
       }
-      if(branchcommitsHistory===""){
-        const obj:BranchInterface = {
-          [`${branchName}`]:{
-          ["init"]:{
-            time:timeDataInitially[0],
-            message:timeDataInitially[1]
+      const commitMessageMain = fs.readFileSync(this.commitsPath,"utf-8");
+      const commitMessageMainArrays = commitMessageMain.split("\n").filter(line=>line!=="");
+      let commitMessage:string[] = [];
+        const result:BranchInterface = {
+          [`${branchName}`]:{}
+        };
+        
+        for (let i = 0; i < commitMessageMainArrays.length; i++) {
+          const id = commitMessageMainArrays[i];
+          const message = id.split(":");
+          const commitId = message[1]; // Extracting the commit ID
+          const commitMessage = message[0]; // Extracting the commit message
+          if(currentHead!==commitId){
+            result[branchName][commitId] = {
+              time: message[2]+":"+message[3], 
+              message: commitMessage
+            };
+          }else if(currentHead===commitId){
+            result[branchName][commitId] = {
+              time: message[2]+":"+message[3], 
+              message: "MAIN"+commitMessage
+            };
+            break;
           }
-          }
+          
+
+          console.log("C",currentHead,"COMMIDTD",commitId);
         }
-        fs.writeFileSync(this.branchesPath, JSON.stringify(obj, null, 2), 'utf-8');
-        fs.writeFileSync(this.currentBranchName,`${branchName}`)
+        console.log("result->",result); 
+        console.log("MESSAGE MAIN COMMITS",commitMessage);
+        if(parsedJSONdata===null){
+          fs.writeFileSync(this.branchesPath, JSON.stringify(result, null, 2), 'utf-8');
+        }else{
+          const a = {...parsedJSONdata,...result}
+          fs.writeFileSync(this.branchesPath, JSON.stringify(a, null, 2), 'utf-8');
+        }
+        if(currentBranchName==="main"){
+          this.checkoutToMain(currentHead,path.join(this.gitpath,"cmpA"));
+        }
         return;
-      }
+            // let obj:BranchInterface = {
+      //   [`${branchName}`]:{
+      //   ["init"]:{
+      //     time:timeDataInitially[0],
+      //     message:timeDataInitially[1]
+      //   }
+      //   }
+      // }
+      // if(branchcommitsHistory===""){
+      //   const obj:BranchInterface = {
+      //     [`${branchName}`]:{
+      //     ["init"]:{
+      //       time:timeDataInitially[0],
+      //       message:timeDataInitially[1]
+      //     }
+      //     }
+      //   }
+      //   fs.writeFileSync(this.branchesPath, JSON.stringify(obj, null, 2), 'utf-8');
+      //   fs.writeFileSync(this.currentBranchName,`${branchName}`)
+      //   return;
+      // }
 
-      parsedJSONdata[`${branchName}`]  = {["init"]:{time:timeDataInitially[0],message:"init"}};
-      fs.writeFileSync(this.branchesPath, JSON.stringify(parsedJSONdata, null, 2), 'utf-8');
-      fs.writeFileSync(this.currentBranchName,`${branchName}`)
+      // parsedJSONdata[`${branchName}`]  = {["init"]:{time:timeDataInitially[0],message:"init"}};
+      // fs.writeFileSync(this.branchesPath, JSON.stringify(parsedJSONdata, null, 2), 'utf-8');
+      // fs.writeFileSync(this.currentBranchName,`${branchName}`)
 
+    }
+    // this.checkoutmore()
+  } 
+  async checkoutToMain(commitId:string,pathName:string){
+    this.migrateToCommitInMain(commitId,pathName)
   }
-
-
-}
 }
 
 export default Gitpulse;
@@ -998,7 +1073,8 @@ program
   .action((commitId) => {
     gitpulse = Gitpulse.loadFromConfig();
     if (gitpulse) {
-      gitpulse.migrateToCommitInMain(commitId);
+      const a = path.join(process.cwd(),"../");
+      gitpulse.migrateToCommitInMain(commitId,a);
     } else {
       console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
     }
