@@ -113,7 +113,7 @@ class Gitpulse {
       klaw(path.join(this.cwd))
         .on('data', (item) => {
           // console.log(">>>>",item)
-          if (item.path.includes("sloth") || item.path.includes(".git")) {
+          if (item.path.includes("sloth") || item.path.includes("Sloth")|| item.path.includes(".git")) {
           }
 
           else if (item.stats.isDirectory()) {
@@ -177,6 +177,7 @@ class Gitpulse {
         const filteredFiles = files.filter(file => {
           const fileName = file as string;
           return !fileName.startsWith('sloth') &&
+          !fileName.startsWith('Sloth') &&
             !fileName.includes('.git') &&
             !fileName.includes('.gitpulse') &&
             !fileName.includes('node_modules') &&
@@ -343,19 +344,19 @@ class Gitpulse {
     const mainCommitIds = fs.readFileSync(this.mainCommitsIdOnly,"utf-8");
     let mainCommitIdsArray = mainCommitIds.split("\n").filter(line=>line!=="");
     const jsonData = fs.readFileSync(this.branchesPath,"utf-8")
-    const parsedData:BranchInterface = JSON.parse(jsonData);
+    const parsedData:BranchInterface =jsonData? JSON.parse(jsonData):"";
     const data = parsedData[currentBranchName];
-    const keys = Object.keys(data);
+    const keys =data? Object.keys(data):[];
     const lastKey  = keys.pop();
-    if(lastKey !== currentHead){
+    if(lastKey && currentHead && lastKey !== currentHead){
        return console.log(clc.redBright(`Please make a new branch to commit`));
     }
     mainCommitIdsArray.reverse();
-    if (currentBranchName !== "main") {
+    if (data && currentBranchName !== "main") {
       await this.branchCommits(message);
       return;
     }
-    else if(mainCommitIdsArray[mainCommitIdsArray.length-1] === currentHead ){
+    else if(mainCommitIdsArray.length !==1 && mainCommitIdsArray[mainCommitIdsArray.length-1] === currentHead ){
       return console.log(clc.redBright(`Please make a new branch to commit`));
     }
     console.log("Commit Message : ", message);
@@ -377,7 +378,6 @@ class Gitpulse {
             }
           });
         });
-        //@ts-ignore
         stagedFiles.push(...files);
         fs.writeFileSync(this.initiaStartingTime, `${new Date()}\n${message}`)
       } catch (err) {
@@ -731,10 +731,16 @@ class Gitpulse {
 
 
   log(branch: string) {
-    if (branch === "main") {
+
+    let currentBranch = fs.readFileSync(this.currentBranchName, "utf-8").trim();
+     if(branch === "" && currentBranch==="main"){
+      return console.log(clc.red(`Please write -> npm run git log main `))
+     }
+     else if (branch === "main") {
       let currentHead = fs.readFileSync(this.currentHead, "utf-8").trim();
       let data = fs.readFileSync(this.commitsPath, "utf-8");
       let show = data.split("\n").filter(line => line !== "").reverse();
+   
       console.log(clc.bgWhite(clc.black(`Commit logs for ${clc.red("Tree")}/${clc.green(`${branch}`)}`)));
       show.forEach((data) => {
         const m = data.split(":");
@@ -753,7 +759,7 @@ class Gitpulse {
       if (!branch) {
         const currentBranchName = fs.readFileSync(this.currentBranchName, "utf-8");
         const log = fs.readFileSync(this.branchesPath, "utf-8");
-        const parsedDta: BranchInterface = JSON.parse(log);
+        const parsedDta: BranchInterface =log? JSON.parse(log):{};
         if (!parsedDta[currentBranchName]) {
           return console.log(clc.red(`Branch ${currentBranchName} does not exist !!`));
         }
@@ -774,7 +780,7 @@ class Gitpulse {
       }
       else {
         const log = fs.readFileSync(this.branchesPath, "utf-8");
-        const parsedDta: BranchInterface = JSON.parse(log);
+        const parsedDta: BranchInterface =log? JSON.parse(log):{};
         if (!parsedDta[branch]) {
           return console.log(clc.red(`Branch ${branch} does not exist !!`));
         }
@@ -949,7 +955,7 @@ class Gitpulse {
         }
         const filesR = files;
         const fullPaths = files
-          .filter(file => !file.includes("sloth") && !file.includes(".git"))
+          .filter(file => !file.includes("sloth")&& !file.includes("Sloth") && !file.includes(".git"))
           .map(file => path.join(this.cwd, file));
         return resolve(fullPaths);
       })

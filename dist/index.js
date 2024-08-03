@@ -142,7 +142,7 @@ class Gitpulse {
             (0, klaw_1.default)(path_1.default.join(this.cwd))
                 .on('data', (item) => {
                 // console.log(">>>>",item)
-                if (item.path.includes("sloth") || item.path.includes(".git")) {
+                if (item.path.includes("sloth") || item.path.includes("Sloth") || item.path.includes(".git")) {
                 }
                 else if (item.stats.isDirectory()) {
                     fs_1.default.readdir(item.path, (err, files) => {
@@ -368,19 +368,19 @@ class Gitpulse {
             const mainCommitIds = fs_1.default.readFileSync(this.mainCommitsIdOnly, "utf-8");
             let mainCommitIdsArray = mainCommitIds.split("\n").filter(line => line !== "");
             const jsonData = fs_1.default.readFileSync(this.branchesPath, "utf-8");
-            const parsedData = JSON.parse(jsonData);
+            const parsedData = jsonData ? JSON.parse(jsonData) : "";
             const data = parsedData[currentBranchName];
-            const keys = Object.keys(data);
+            const keys = data ? Object.keys(data) : [];
             const lastKey = keys.pop();
-            if (lastKey !== currentHead) {
+            if (lastKey && currentHead && lastKey !== currentHead) {
                 return console.log(cli_color_1.default.redBright(`Please make a new branch to commit`));
             }
             mainCommitIdsArray.reverse();
-            if (currentBranchName !== "main") {
+            if (data && currentBranchName !== "main") {
                 yield this.branchCommits(message);
                 return;
             }
-            else if (mainCommitIdsArray[mainCommitIdsArray.length - 1] === currentHead) {
+            else if (mainCommitIdsArray.length !== 1 && mainCommitIdsArray[mainCommitIdsArray.length - 1] === currentHead) {
                 return console.log(cli_color_1.default.redBright(`Please make a new branch to commit`));
             }
             console.log("Commit Message : ", message);
@@ -402,7 +402,6 @@ class Gitpulse {
                             }
                         });
                     });
-                    //@ts-ignore
                     stagedFiles.push(...files);
                     fs_1.default.writeFileSync(this.initiaStartingTime, `${new Date()}\n${message}`);
                 }
