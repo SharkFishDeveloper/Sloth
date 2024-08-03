@@ -1,42 +1,30 @@
 {
-  "f1": {
+  "root/root1": {
     "init": {
-      "time": "Sat Aug 03 2024 00:32",
-      "message": "MAINfirst"
+      "time": "Sat Aug 03 2024 15:06",
+      "message": "MAINroot"
     },
-    "1dc227a477d59b0e3aae6726959832140389c4ad": {
-      "time": "Sat Aug 03 2024 00:34:06 GMT+0530 (India Standard Time)",
-      "message": "branchCommit-added-mul.txt-and-a.txt"
+    "f8ab94a6572c4b32cc4e1615e108de3f05e0d026": {
+      "time": "Sat Aug 03 2024 15:07:32 GMT+0530 (India Standard Time)",
+      "message": "added-a.txt-in-root/root1"
     },
-    "e0ed411133cf20b67a4e769faa80feb9947e7b4e": {
-      "time": "Sat Aug 03 2024 00:37:12 GMT+0530 (India Standard Time)",
-      "message": "deleted-a.txt"
-    },
-    "f6720cc93a7d13573974ee74b8cf584afc0d5067": {
-      "time": "Sat Aug 03 2024 00:42:10 GMT+0530 (India Standard Time)",
-      "message": "modified-mul.txt"
+    "ae88e48c1dcccc4f1803fd8879b477c172a23adb": {
+      "time": "Sat Aug 03 2024 16:15:49 GMT+0530 (India Standard Time)",
+      "message": "modifed-root/root1-a.txt"
     }
   },
-  "f2": {
+  "root/root2": {
     "init": {
-      "time": "Sat Aug 03 2024 00:32",
-      "message": "MAINfirst"
+      "time": "Sat Aug 03 2024 15:06",
+      "message": "MAINroot"
     },
-    "1dc227a477d59b0e3aae6726959832140389c4ad": {
-      "time": "Sat Aug 03 2024 00:34:06 GMT+0530 (India Standard Time)",
-      "message": "branchCommit-added-mul.txt-and-a.txt"
+    "75c667a1942a889c08a8de46e47e95449af318c9": {
+      "time": "Sat Aug 03 2024 15:09:33 GMT+0530 (India Standard Time)",
+      "message": "added-root/root2-b.txt-hello-root2"
     },
-    "e0ed411133cf20b67a4e769faa80feb9947e7b4e": {
-      "time": "Sat Aug 03 2024 00:37:12 GMT+0530 (India Standard Time)",
-      "message": "deleted-a.txt"
-    },
-    "f6720cc93a7d13573974ee74b8cf584afc0d5067": {
-      "time": "Sat Aug 03 2024 00:42:10 GMT+0530 (India Standard Time)",
-      "message": "modified-mul.txt"
-    },
-    "2522eabfac58f21100f6ea579f9fc4beca386ba1": {
-      "time": "Sat Aug 03 2024 12:19:51 GMT+0530 (India Standard Time)",
-      "message": "extraf2"
+    "d10b5b6fa9394131eb3322d3f5ed8f498b2a553e": {
+      "time": "Sat Aug 03 2024 15:11:49 GMT+0530 (India Standard Time)",
+      "message": "deleted-b.txt-in-root/root2"
     }
   }
 }
