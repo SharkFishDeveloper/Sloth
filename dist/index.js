@@ -588,7 +588,8 @@ class Gitpulse {
                             const remainingContent = content.substring(newlineIndex + 1);
                             const filePath = firstLine.substring(this.cwd.length);
                             fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", filePath), remainingContent);
-                            console.log("F", "R", remainingContent);
+                            //!
+                            // console.log("F","R",remainingContent);
                         });
                     });
                     if (filesCount === 0 && addedFilesArray.length === 0 && deletedFilesArray.length === 0) {
@@ -728,13 +729,55 @@ class Gitpulse {
             console.log(cli_color_1.default.bgWhite(cli_color_1.default.black(`<- END ->`)));
         }
         else {
-            console.log("LOG FOR BRANCH->", branch);
+            const currenthead = fs_1.default.readFileSync(this.currentHead, "utf-8");
+            if (!branch) {
+                const currentBranchName = fs_1.default.readFileSync(this.currentBranchName, "utf-8");
+                const log = fs_1.default.readFileSync(this.branchesPath, "utf-8");
+                const parsedDta = JSON.parse(log);
+                if (!parsedDta[currentBranchName]) {
+                    return console.log(cli_color_1.default.red(`Branch ${currentBranchName} does not exist !!`));
+                }
+                const data = parsedDta[currentBranchName];
+                console.log("LOG FOR BRANCH->", currentBranchName);
+                const keys = Object.keys(data).reverse();
+                for (const key of keys) {
+                    if (key === currenthead) {
+                        console.log(cli_color_1.default.cyan.bold(`Commit: ${key}`, `<-${cli_color_1.default.yellowBright("Current Head")}`));
+                    }
+                    else {
+                        console.log(cli_color_1.default.cyan.bold(`Commit: ${key}`));
+                    }
+                    console.log(cli_color_1.default.green(`  Time: ${data[key].time}`));
+                    console.log(cli_color_1.default.yellow(`  Message: ${data[key].message}`));
+                    console.log('\n');
+                }
+            }
+            else {
+                const log = fs_1.default.readFileSync(this.branchesPath, "utf-8");
+                const parsedDta = JSON.parse(log);
+                if (!parsedDta[branch]) {
+                    return console.log(cli_color_1.default.red(`Branch ${branch} does not exist !!`));
+                }
+                const data = parsedDta[branch];
+                const keys = Object.keys(data).reverse();
+                for (const key of keys) {
+                    if (key === currenthead) {
+                        console.log(cli_color_1.default.cyan.bold(`Commit: ${key}`, `<-${cli_color_1.default.yellowBright("Current Head")}`));
+                    }
+                    else {
+                        console.log(cli_color_1.default.cyan.bold(`Commit: ${key}`));
+                    }
+                    console.log(cli_color_1.default.green(`  Time: ${data[key].time}`));
+                    console.log(cli_color_1.default.yellow(`  Message: ${data[key].message}`));
+                    console.log('\n');
+                }
+            }
         }
     }
-    migrateToCommitInMain(commitId, srcDest) {
+    migrateToCommitInMain(commitId, srcDest, branch) {
         return __awaiter(this, void 0, void 0, function* () {
             const current = fs_1.default.readFileSync(this.currentHead, "utf-8");
-            if (current === commitId && !srcDest.includes("cmpA")) {
+            if (current === commitId && !srcDest.includes("cmpA") && branch !== "b") {
                 return console.log(cli_color_1.default.greenBright(`You are already on ${commitId}`));
             }
             const migPath = srcDest;
@@ -928,12 +971,16 @@ class Gitpulse {
     }
     checkout(branchName) {
         return __awaiter(this, void 0, void 0, function* () {
-            let timeNmessage = fs_1.default.readFileSync(this.initiaStartingTime, "utf-8");
-            const timeDataInitially = timeNmessage.split("\n").filter(line => line !== "");
+            // let timeNmessage = fs.readFileSync(this.initiaStartingTime,"utf-8");
+            // const timeDataInitially =  timeNmessage.split("\n").filter(line=>line!=="")
             const currentBranchName = fs_1.default.readFileSync(this.currentBranchName, "utf-8");
             let mainCommitIds = fs_1.default.readFileSync(this.mainCommitsIdOnly, "utf-8");
             const mainIds = mainCommitIds.split("\n").filter(line => line !== "");
             const currentHead = fs_1.default.readFileSync(this.currentHead, "utf-8").trim();
+            if (currentBranchName !== "main") {
+                yield this.handleBranchToBranchCheckout(currentBranchName, branchName);
+                return;
+            }
             if (currentBranchName === branchName) {
                 return console.log(cli_color_1.default.blueBright(`You are already on ${branchName}`));
             }
@@ -1025,10 +1072,20 @@ class Gitpulse {
             // this.checkoutmore()
         });
     }
+    handleBranchToBranchCheckout(currentBranchName, branchName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const jsonData = fs_1.default.readFileSync(this.branchesPath, "utf-8");
+            const parsedJson = JSON.parse(jsonData);
+            const branchCommits = parsedJson[currentBranchName];
+            parsedJson[branchName] = branchCommits;
+            fs_1.default.writeFileSync(this.branchesPath, JSON.stringify(parsedJson, null, 0));
+            fs_1.default.writeFileSync(this.currentBranchName, branchName);
+            console.log(cli_color_1.default.cyanBright(`Switched from ${currentBranchName} -> ${branchName}`));
+        });
+    }
     branchCommits(message) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("STARt");
             const distPath = path_1.default.join(this.gitpath, "cmpA"); //only change these names
             const srcPath = path_1.default.join(this.stagingPath, "/"); //only change these names
             const randomBytes = crypto_1.default.randomBytes(20);
@@ -1119,9 +1176,9 @@ class Gitpulse {
             });
             if (modifiedFiles.length === 0 && addedFiles.length === 0 && deletedFiles.length === 0) {
                 try {
-                    console.log(addedFiles, modifiedFiles, deletedFiles);
+                    // console.log(addedFiles,modifiedFiles,deletedFiles);
                     fs_extra_1.default.removeSync(objpath);
-                    return console.log("Nothing to commit, working tree clean");
+                    return console.log(cli_color_1.default.green("Nothing to commit, working tree clean"));
                 }
                 catch (error) {
                     // console.log(error);
@@ -1140,6 +1197,7 @@ class Gitpulse {
                     console.log(parsedJson);
                     fs_1.default.writeFileSync(this.branchesPath, JSON.stringify(parsedJson, null, 2), "utf-8");
                     fs_extra_1.default.emptydirSync(distPath);
+                    fs_1.default.writeFileSync(this.currentHead, newCommitId);
                     yield this.copyDirectory(srcPath, distPath);
                 }
                 catch (error) {
@@ -1151,7 +1209,61 @@ class Gitpulse {
     checkoutToMain(commitId, pathName) {
         return __awaiter(this, void 0, void 0, function* () {
             fs_extra_1.default.removeSync(pathName);
-            this.migrateToCommitInMain(commitId, pathName);
+            this.migrateToCommitInMain(commitId, pathName, "n");
+        });
+    }
+    goto(branchName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const currentBranchName = fs_1.default.readFileSync(this.currentBranchName, "utf-8");
+            if (currentBranchName === branchName) {
+                return console.log(cli_color_1.default.green("You are already present on that branch"));
+            }
+            else if (branchName === "main") {
+                const mainCommitIds = fs_1.default.readFileSync(this.mainCommitsIdOnly, "utf-8");
+                const mainCommitIdsArray = mainCommitIds.split("\n").filter(line => line !== "");
+                const lastMainId = mainCommitIdsArray[mainCommitIdsArray.length - 1];
+                if (lastMainId === "") {
+                    return console.log(cli_color_1.default.red("There are no commits in main branch"));
+                }
+                // console.log("lastMainId",lastMainId);
+                const a = path_1.default.join(process.cwd(), "../");
+                yield this.migrateToCommitInMain(lastMainId, a, "b");
+                yield (this === null || this === void 0 ? void 0 : this.add("."));
+                fs_1.default.writeFileSync(this.currentBranchName, branchName);
+                console.log(cli_color_1.default.green(`You are on ${branchName}`));
+            }
+            else if (branchName !== "main") {
+                const jsonData = fs_1.default.readFileSync(this.branchesPath, "utf-8");
+                const parsedData = JSON.parse(jsonData);
+                const commits = parsedData[branchName];
+                if (!commits) {
+                    {
+                        return console.log(cli_color_1.default.red(`There are no commits for ${branchName} branch`));
+                    }
+                }
+                var migrateCommitIdMain = "";
+                for (const commitId in commits) {
+                    if (commits.hasOwnProperty(commitId)) {
+                        const commit = commits[commitId];
+                        if (commit.message.includes("MAIN")) {
+                            migrateCommitIdMain = commitId;
+                            break;
+                        }
+                    }
+                }
+                if (migrateCommitIdMain === "") {
+                    return console.log(cli_color_1.default.redBright("Some issue is there"));
+                }
+                const a = path_1.default.join(process.cwd(), "../");
+                // await this.migrateToCommitInMain(migrateCommitIdMain,a,"b");
+                // console.log(`migrateCommitIdMain: ${migrateCommitIdMain}`);
+                for (const commitId in commits) {
+                    if (commits.hasOwnProperty(commitId)) {
+                        const commit = commits[commitId];
+                        console.log(cli_color_1.default.cyanBright(commitId));
+                    }
+                }
+            }
         });
     }
 }
@@ -1184,12 +1296,17 @@ program
     gitpulse.saveToConfig();
 });
 program
-    .command('log <branch>')
+    .command('log [branch]')
     .description('Show commit history')
     .action((branch) => {
     gitpulse = Gitpulse.loadFromConfig();
     if (gitpulse) {
-        gitpulse.log(branch);
+        if (!branch) {
+            gitpulse.log("");
+        }
+        else {
+            gitpulse.log(branch);
+        }
     }
     else {
         console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
@@ -1202,7 +1319,7 @@ program
     gitpulse = Gitpulse.loadFromConfig();
     if (gitpulse) {
         const a = path_1.default.join(process.cwd(), "../");
-        gitpulse.migrateToCommitInMain(commitId, a);
+        gitpulse.migrateToCommitInMain(commitId, a, "n");
     }
     else {
         console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
@@ -1215,6 +1332,18 @@ program
     gitpulse = Gitpulse.loadFromConfig();
     if (gitpulse) {
         gitpulse.checkout(branch);
+    }
+    else {
+        console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
+    }
+});
+program
+    .command('goto <branch>')
+    .description('Goto an already created branch with latest commit')
+    .action((branch) => {
+    gitpulse = Gitpulse.loadFromConfig();
+    if (gitpulse) {
+        gitpulse.goto(branch);
     }
     else {
         console.error('Gitpulse not initialized. Please run "init" with the name of the project first.');
