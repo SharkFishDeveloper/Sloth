@@ -364,9 +364,24 @@ class Gitpulse {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const currentBranchName = fs_1.default.readFileSync(this.currentBranchName, "utf-8");
+            const currentHead = fs_1.default.readFileSync(this.currentHead, "utf-8");
+            const mainCommitIds = fs_1.default.readFileSync(this.mainCommitsIdOnly, "utf-8");
+            let mainCommitIdsArray = mainCommitIds.split("\n").filter(line => line !== "");
+            const jsonData = fs_1.default.readFileSync(this.branchesPath, "utf-8");
+            const parsedData = JSON.parse(jsonData);
+            const data = parsedData[currentBranchName];
+            const keys = Object.keys(data);
+            const lastKey = keys.pop();
+            if (lastKey !== currentHead) {
+                return console.log(cli_color_1.default.redBright(`Please make a new branch to commit`));
+            }
+            mainCommitIdsArray.reverse();
             if (currentBranchName !== "main") {
                 yield this.branchCommits(message);
                 return;
+            }
+            else if (mainCommitIdsArray[mainCommitIdsArray.length - 1] === currentHead) {
+                return console.log(cli_color_1.default.redBright(`Please make a new branch to commit`));
             }
             console.log("Commit Message : ", message);
             const commitDataPath = fs_1.default.readFileSync(this.commitsPath, "utf-8");
@@ -387,6 +402,7 @@ class Gitpulse {
                             }
                         });
                     });
+                    //@ts-ignore
                     stagedFiles.push(...files);
                     fs_1.default.writeFileSync(this.initiaStartingTime, `${new Date()}\n${message}`);
                 }
@@ -394,6 +410,7 @@ class Gitpulse {
                     // console.error("Error reading staging directory:", err);
                 }
                 // console.log("stagedFiles",stagedFiles)
+                //@ts-ignore
                 stagedFiles.forEach((file) => __awaiter(this, void 0, void 0, function* () {
                     // const a = pathStage.push(path.join(this.stagingPath, file));
                     // const path1 = (path.join(this.cwd, "Git-pulse/.gitpulse", "staging"));
@@ -1082,8 +1099,8 @@ class Gitpulse {
             const objpath = path_1.default.join(this.branchingObjectsPath, newCommitId);
             fs_1.default.mkdirSync(objpath);
             fs_1.default.mkdirSync(path_1.default.join(objpath, "mdf"));
-            fs_1.default.writeFileSync(path_1.default.join(objpath, "ad.txt"), "");
             fs_1.default.writeFileSync(path_1.default.join(objpath, "rm.txt"), "");
+            fs_1.default.writeFileSync(path_1.default.join(objpath, "ad.txt"), "");
             (_a = difference.diffSet) === null || _a === void 0 ? void 0 : _a.forEach((diff, index) => {
                 if (diff.state === "left" && diff.path1 && diff.name1) {
                     console.log("DIFF", diff.path1, diff.name1);
@@ -1113,14 +1130,15 @@ class Gitpulse {
                                         // console.log('Compressed data successfully written to', filePath);
                                     }
                                 });
-                                console.log("added files -> ", `\n${path_1.default.join(this.cwd, a, diff.name1)}`);
-                                fs_1.default.appendFileSync(path_1.default.join(objpath, "ad.txt"), `\n${path_1.default.join(this.cwd, a, diff.name1)}`);
-                                addedFiles.push(path_1.default.join(this.cwd, a, diff.name1));
                             });
+                            console.log("added files -> ", `\n${path_1.default.join(this.cwd, a, diff.name1)}`);
+                            fs_1.default.appendFileSync(path_1.default.join(objpath, "ad.txt"), `\n${path_1.default.join(this.cwd, a, diff.name1)}`);
+                            addedFiles.push(path_1.default.join(this.cwd, a, diff.name1));
                         }
                         else {
                             fs_1.default.appendFileSync(path_1.default.join(objpath, "ad.txt"), `\n${path_1.default.join(this.cwd, a, diff.name1)}`);
                             addedFiles.push(path_1.default.join(this.cwd, a, diff.name1));
+                            console.log("ADDEd files -> ", `\n${path_1.default.join(this.cwd, a, diff.name1)}`);
                         }
                     }
                 }
@@ -1256,7 +1274,7 @@ class Gitpulse {
                         else if (bool === true) {
                             lastCommitId = commitId;
                             yield this.gotoWorkingAndStaging(commitId);
-                            console.log(cli_color_1.default.cyanBright("->", commitId));
+                            console.log(cli_color_1.default.cyanBright("IDS->", commitId));
                         }
                     }
                 }
@@ -1331,14 +1349,15 @@ class Gitpulse {
                 console.log("START---------------");
                 console.log("DEF---------------", delFile);
                 try {
-                    console.log("START DELETING---------------");
-                    yield fs_extra_1.default.remove(delFile);
+                    console.log("START DELETING---------------", delFile);
+                    yield fs_extra_1.default.removeSync(delFile);
                     console.log(`Successfully deleted: ${delFile}`);
                 }
                 catch (error) {
                     console.error(`Error deleting ${delFile}:`, error);
                 }
             }));
+            console.log(cli_color_1.default.redBright(`Now next`));
         });
     }
     migrateToBranchCommit(commitIdGiven) {
@@ -1394,6 +1413,7 @@ class Gitpulse {
                 if (migrateCommitIdMain === "") {
                     return console.log(cli_color_1.default.redBright("Some issue is there"));
                 }
+                console.log("ID main->", migrateCommitIdMain);
                 const a = path_1.default.join(process.cwd(), "../");
                 console.log("//////////////////////////////////////////////");
                 yield this.migrateToCommitInMain(migrateCommitIdMain, a, "b");
@@ -1409,6 +1429,7 @@ class Gitpulse {
                             }
                         }
                         else if (bool === true) {
+                            console.log(cli_color_1.default.cyanBright("Applying->", commitId));
                             lastCommitId = commitId;
                             yield this.gotoWorkingAndStaging(commitId);
                             if (commitIdGiven === commitId) {
