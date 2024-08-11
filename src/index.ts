@@ -770,13 +770,13 @@ class Gitpulse {
      else if (branch === "main") {
       let currentHead = fs.readFileSync(this.currentHead, "utf-8").trim();
       let data = fs.readFileSync(this.commitsPath, "utf-8");
-      let show = data.split("\n").filter(line => line !== "").reverse();
-   
+      let show = data.split("\n").filter(line =>line !== "" && line !== "\r").reverse();
       console.log(clc.bgWhite(clc.black(`Commit logs for ${clc.red("Tree")}/${clc.green(`${branch}`)}`)));
       show.forEach((data) => {
         const m = data.split(":");
-        const gmtIndex = m[4].indexOf("GMT");
-        const time = m[2] + ":" + m[3] + ":" + m[4].substring(0, gmtIndex);
+        if(m===undefined)return;
+        const gmtIndex = m[4]?.indexOf("GMT+");
+        const time = m[2] + ":" + m[3] + ":" + m[4]?.substring(0, gmtIndex);
         console.log(
           `${clc.yellow("message ->")} ${m[0]}\t` +
           `${clc.whiteBright("ID ->")} ${m[1]} ` +
@@ -1307,7 +1307,7 @@ class Gitpulse {
       const mainCommitIdsArray = mainCommitIds.split("\n").filter(line => line !== "");
       const lastMainId = mainCommitIdsArray[mainCommitIdsArray.length - 1];
       if (lastMainId === "") { return console.log(clc.red("There are no commits in main branch")) }
-      // console.log("lastMainId",lastMainId);
+      console.log("lastMainId",lastMainId);
       const a = path.join(process.cwd(), "../");
       await this.migrateToCommitInMain(lastMainId, a, "b");
       await this?.add(".");
@@ -1340,6 +1340,7 @@ class Gitpulse {
       console.log(`migrateCommitIdMain: ${migrateCommitIdMain}`);
       var bool = false;
       var lastCommitId = "";
+     
       for (const commitId in commits) {
         if (commits.hasOwnProperty(commitId)) {
           const commit = commits[commitId];
@@ -1349,6 +1350,7 @@ class Gitpulse {
             }
           } else if (bool === true) {
             lastCommitId = commitId;
+            console.log("lastMainId",lastCommitId);
             await this.gotoWorkingAndStaging(commitId);
             console.log(clc.cyanBright("IDS->", commitId));
           }
@@ -1428,7 +1430,7 @@ class Gitpulse {
       console.log("DEF---------------", delFile);
       try {
         console.log("START DELETING---------------",delFile);
-        await fsExtra.removeSync(delFile);
+         await fsExtra.remove(delFile);
         console.log(`Successfully deleted: ${delFile}`);
       } catch (error) {
         console.error(`Error deleting ${delFile}:`, error);
@@ -1671,26 +1673,46 @@ class Gitpulse {
       const jsonData = fs.readFileSync(this.branchesPath, "utf-8");
       const parsedData: BranchInterface |null= JSON.parse(jsonData);
       const commits =parsedData ?  parsedData[branchName]:null;
-      const key_commits =parsedData ?  parsedData[value_key]:null;
+
+      const key_commits = parsedData ?  parsedData[value_key]:null;
+      const key_commits_main = fs.readFileSync(this.mainCommitsIdOnly,"utf-8").split("\n").filter(line=>line!=="");
+
       let diff_commit_message:string[]|null = [];
       var diff:string[]|null =[];
-      console.log("=",commits ? commits:"");
+      console.log("=",value_key ? value_key:"");
+     if(value_key!=="main"){
       for(const keys in commits){
         if(commits && key_commits){
           const commitValue = key_commits[keys];
           if(!commitValue){
             diff?.push(keys)
             diff_commit_message?.push(commits[keys].message);
-            console.log("NP",keys)
+            // console.log("NP",keys)
           }
 
         }
       }
+     }else if(value_key==="main"){
+      let i = 0;
+      for(const keys in commits){
+        if(commits && key_commits_main){
+          const commitValue = key_commits_main[i];
+          if(!commitValue){
+            diff?.push(keys)
+            diff_commit_message?.push(commits[keys].message);
+            // console.log("NP",keys)
+          }
+
+        }
+        i++;
+      }
+     }
       if(!commits){
         return console.log(clc.redBright(`Something went wrong`));
       } 
 
       if(diff.length > 0){
+        // console.log(diff,branchName,value_key,diff_commit_message);
         await Push(diff,branchName,value_key,diff_commit_message);
       }
       return console.log(clc.greenBright(`Reached here`));
