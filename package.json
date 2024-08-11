@@ -1,0 +1,37 @@
+{
+  "name": "sloth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "git": "tsc -b && node ./dist/index"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.12"
+  },
+  "dependencies": {
+    "@types/archiver": "^6.0.2",
+    "@types/cli-color": "^2.0.6",
+    "@types/commander": "^2.12.2",
+    "@types/diff": "^5.2.1",
+    "@types/diff-match-patch": "^1.0.36",
+    "@types/fs-extra": "^11.0.4",
+    "@types/klaw": "^3.0.6",
+    "@types/line-reader": "^0.0.37",
+    "archiver": "^7.0.1",
+    "axios": "^1.7.3",
+    "cli-color": "^2.0.4",
+    "commander": "^12.1.0",
+    "diff": "^5.2.0",
+    "diff-match-patch": "^1.0.5",
+    "dir-compare": "^5.0.0",
+    "fs-extra": "^11.2.0",
+    "klaw": "^4.1.0",
+    "line-reader": "^0.4.0",
+    "simple-git": "^3.25.0",
+    "unzipper": "^0.12.3"
+  }
+}
