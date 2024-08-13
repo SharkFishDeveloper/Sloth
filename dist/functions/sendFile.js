@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Push = void 0;
+exports.Push = exports.promptQuestion = void 0;
+const axios_1 = __importDefault(require("axios"));
 const cli_color_1 = __importDefault(require("cli-color"));
 const readline_1 = __importDefault(require("readline"));
 function promptQuestion(query) {
@@ -25,6 +26,7 @@ function promptQuestion(query) {
         resolve(answer);
     }));
 }
+exports.promptQuestion = promptQuestion;
 function Push(diff, branchname, parentBranch, history) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log(diff, branchname, parentBranch, history);
@@ -43,6 +45,12 @@ function Push(diff, branchname, parentBranch, history) {
         if (diff.length === 0) {
             return console.log(cli_color_1.default.redBright(`Nothing to commit`));
         }
+        try {
+            const result = yield axios_1.default.post(`http://localhost:3000/init`);
+        }
+        catch (error) {
+        }
+        //TODO : get preassigned URL
     });
 }
 exports.Push = Push;

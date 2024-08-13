@@ -1,9 +1,10 @@
 
+import axios from 'axios';
 import clc from 'cli-color';
 import readline from "readline";
 
 
-function promptQuestion(query:string) {
+export function promptQuestion(query:string) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -35,5 +36,11 @@ export async function Push(diff: string[], branchname: string, parentBranch: str
   if(diff.length===0){
     return console.log(clc.redBright(`Nothing to commit`));
   }
+  try {
+    const result = await axios.post(`http://localhost:3000/init`)
+  } catch (error) {
+    
+  }
+  //TODO : get preassigned URL
 
 }

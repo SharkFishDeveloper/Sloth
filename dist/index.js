@@ -46,6 +46,7 @@ const fs_extra_1 = __importDefault(require("fs-extra"));
 const klaw_1 = __importDefault(require("klaw"));
 const zlib_1 = __importDefault(require("zlib"));
 const sendFile_1 = require("./functions/sendFile");
+const initOrigin_1 = require("./functions/initOrigin");
 // import linereader from "line-reader"
 var configPath = path_1.default.join(process.cwd(), "/.gitpulse/config.json");
 class Gitpulse {
@@ -1686,7 +1687,7 @@ class Gitpulse {
                     return console.log(cli_color_1.default.redBright(`Something went wrong`));
                 }
                 if (diff.length > 0) {
-                    console.log(diff, branchName, value_key, diff_commit_message);
+                    // console.log(diff,branchName,value_key,diff_commit_message);
                     yield (0, sendFile_1.Push)(diff, branchName, value_key, diff_commit_message);
                 }
                 return console.log(cli_color_1.default.greenBright(`Reached here`));
@@ -1694,6 +1695,11 @@ class Gitpulse {
             catch (error) {
                 return console.log(cli_color_1.default.redBright `Something went wrong`);
             }
+        });
+    }
+    initOrigin() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, initOrigin_1.initOriginMethod)();
         });
     }
 }
@@ -1824,6 +1830,14 @@ program
     .action((branch) => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOrigin(branch);
+});
+program
+    .command('init-origin ')
+    .description('Create a new repo on internet')
+    // .option('-m, --message <message>', 'Commit message')
+    .action((branch) => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.initOrigin();
 });
 program.command('add <action>')
     .description("Add files to stage area")

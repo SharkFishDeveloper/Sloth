@@ -11,6 +11,7 @@ import klaw from "klaw"
 import zlib from "zlib";
 import { BranchInterface ,BranchKeyValueItems} from "./util";
 import {Push} from "./functions/sendFile";
+import { initOriginMethod } from "./functions/initOrigin";
 // import linereader from "line-reader"
 var configPath = path.join(process.cwd(), "/.gitpulse/config.json");
 
@@ -1721,6 +1722,10 @@ class Gitpulse {
     }
   }
 
+  async initOrigin(){
+    await initOriginMethod();
+  }
+
 
 }
 
@@ -1863,6 +1868,15 @@ program
   .action((branch) => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse?.pushOrigin(branch);
+  });
+
+  program
+  .command('init-origin ')
+  .description('Create a new repo on internet')
+  // .option('-m, --message <message>', 'Commit message')
+  .action((branch) => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse?.initOrigin();
   });
 
 
