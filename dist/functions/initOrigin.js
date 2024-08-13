@@ -13,21 +13,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initOriginMethod = void 0;
-const axios_1 = __importDefault(require("axios"));
 const sendFile_1 = require("./sendFile");
-const cli_color_1 = __importDefault(require("cli-color"));
+const file_1 = require("./file");
+const path_1 = __importDefault(require("path"));
+const zipFiles_1 = require("./zipFiles");
 function initOriginMethod() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const a = path_1.default.join(process.cwd());
+            console.log(a);
+            //! should i also include "dist"
+            const files = (0, file_1.getAllFiles)(a);
+            yield (0, zipFiles_1.zipFiles)(files);
+            return;
             const reponame = yield (0, sendFile_1.promptQuestion)('Enter Repo name: ');
             const email = yield (0, sendFile_1.promptQuestion)('Enter your username: ');
             const password = yield (0, sendFile_1.promptQuestion)('Enter your password: ');
-            const result = yield axios_1.default.post(`http://localhost:3000/init`, { reponame, email, password });
-            console.log(result.data);
+            // const result = await axios.post(`http://localhost:3000/init`,{reponame,email,password});
+            // const preUrl = result.data.message;
+            // console.log("preUrl",);
         }
         catch (error) {
             //@ts-ignore
-            console.log(cli_color_1.default.redBright(error.response.data.message));
+            // console.log(clc.redBright(error.response.data.message));
         }
     });
 }
