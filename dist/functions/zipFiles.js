@@ -16,13 +16,13 @@ exports.zipFiles = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const archiver_1 = __importDefault(require("archiver"));
+const fs_extra_1 = __importDefault(require("fs-extra"));
 function zipFiles(files) {
     return __awaiter(this, void 0, void 0, function* () {
-        // await fsExtra.remove(path.join(process.cwd(),"../","pr/Sloth"))
-        fs_1.default.mkdirSync(path_1.default.join(process.cwd(), "../", "Sloth.zip"));
-        const outputPath = path_1.default.join(process.cwd(), "../", "Sloth.zip");
-        console.log(outputPath);
-        // return;
+        let pathR = path_1.default.join(process.cwd(), "../");
+        pathR = path_1.default.basename(pathR);
+        yield fs_extra_1.default.remove(path_1.default.join(process.cwd(), "../", "pr.gzip"));
+        const outputPath = path_1.default.join(process.cwd(), "../", "pr.gzip");
         return new Promise((resolve, reject) => {
             const output = fs_1.default.createWriteStream(outputPath);
             const archive = (0, archiver_1.default)('zip', {
@@ -37,8 +37,8 @@ function zipFiles(files) {
             });
             archive.pipe(output);
             files.forEach(file => {
-                const fileName = path_1.default.relative(path_1.default.dirname(files[0]), file); // Maintain folder structure
-                archive.file(file, { name: fileName });
+                const fileName = path_1.default.relative(process.cwd(), file);
+                archive.file(fileName, { name: path_1.default.join(pathR, 'Sloth', fileName) });
             });
             archive.finalize();
         });

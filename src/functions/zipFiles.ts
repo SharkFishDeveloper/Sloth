@@ -4,11 +4,10 @@ import archiver from 'archiver';
 import fsExtra from "fs-extra";
 
 export async function zipFiles(files : string[]){
-    // await fsExtra.remove(path.join(process.cwd(),"../","pr/Sloth"))
-    fs.mkdirSync(path.join(process.cwd(),"../","Sloth"))
-    const outputPath = path.join(process.cwd(),"../","Sloth");
-    console.log(outputPath)
-    // return;
+    let pathR = path.join(process.cwd(),"../");
+    pathR = path.basename(pathR);
+    await fsExtra.remove(path.join(process.cwd(),"../","pr.gzip"))
+    const outputPath = path.join(process.cwd(),"../","pr.gzip");
     return new Promise((resolve, reject) => {
         const output = fs.createWriteStream(outputPath);
         const archive = archiver('zip', {
@@ -26,9 +25,10 @@ export async function zipFiles(files : string[]){
 
         archive.pipe(output);
 
+
         files.forEach(file => {
-            const fileName = path.relative(path.dirname(files[0]), file); // Maintain folder structure
-            archive.file(file, { name: fileName });
+            const fileName = path.relative(process.cwd(), file);
+            archive.file(fileName, { name: path.join(pathR,'Sloth', fileName) });
         });
 
         archive.finalize();
