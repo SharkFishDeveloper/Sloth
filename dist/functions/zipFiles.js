@@ -30,7 +30,7 @@ function zipFiles(files) {
             });
             output.on('close', () => {
                 console.log(`Zip file created: ${outputPath} (${archive.pointer()} total bytes)`);
-                // resolve();
+                resolve();
             });
             archive.on('error', err => {
                 reject(err);

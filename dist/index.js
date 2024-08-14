@@ -46,6 +46,7 @@ const klaw_1 = __importDefault(require("klaw"));
 const zlib_1 = __importDefault(require("zlib"));
 const sendFile_1 = require("./functions/sendFile");
 const initOrigin_1 = require("./functions/initOrigin");
+const pushOrigin_1 = require("./functions/pushOrigin");
 // import linereader from "line-reader"
 var configPath = path_1.default.join(process.cwd(), "/.gitpulse/config.json");
 class Gitpulse {
@@ -1770,6 +1771,11 @@ class Gitpulse {
             yield (0, initOrigin_1.initOriginMethod)();
         });
     }
+    pushOriginS3() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, pushOrigin_1.pushOriginOwner)();
+        });
+    }
 }
 exports.default = Gitpulse;
 const program = new commander_1.Command();
@@ -1900,12 +1906,18 @@ program
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOrigin(branch);
 });
 program
-    .command('init-origin ')
+    .command('create-origin')
     .description('Create a new repo on internet')
-    // .option('-m, --message <message>', 'Commit message')
-    .action((branch) => {
+    .action(() => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.initOrigin();
+});
+program
+    .command('push origin')
+    .description('Create a new repo on internet')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOriginS3();
 });
 program.command('add <action>')
     .description("Add files to stage area")

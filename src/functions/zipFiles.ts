@@ -8,7 +8,7 @@ export async function zipFiles(files : string[]){
     pathR = path.basename(pathR);
     await fsExtra.remove(path.join(process.cwd(),"../","pr.gzip"))
     const outputPath = path.join(process.cwd(),"../","pr.gzip");
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         const output = fs.createWriteStream(outputPath);
         const archive = archiver('zip', {
             zlib: { level: 9 }
@@ -16,7 +16,7 @@ export async function zipFiles(files : string[]){
 
         output.on('close', () => {
             console.log(`Zip file created: ${outputPath} (${archive.pointer()} total bytes)`);
-            // resolve();
+            resolve();
         });
 
         archive.on('error', err => {

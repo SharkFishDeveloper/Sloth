@@ -13,14 +13,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadFile = void 0;
+const axios_1 = __importDefault(require("axios"));
+const cli_color_1 = __importDefault(require("cli-color"));
 const fs_1 = __importDefault(require("fs"));
-const uploadFile = (fileName, localFilePath) => __awaiter(void 0, void 0, void 0, function* () {
-    const fileContent = fs_1.default.readFileSync(localFilePath);
-    // const response = await s3.upload({
-    //     Body: fileContent,
-    //     Bucket: "vercel",
-    //     Key: fileName,
-    // }).promise();
-    // console.log(response);
+const form_data_1 = __importDefault(require("form-data"));
+const path_1 = __importDefault(require("path"));
+const uploadFile = (preUrl, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const filePath = path_1.default.join(process.cwd(), "../", "pr.gzip");
+    try {
+        const url = preUrl.url;
+        const { bucket, 'X-Amz-Algorithm': xAmzAlgorithm, 'X-Amz-Credential': xAmzCredential, 'X-Amz-Date': xAmzDate, key, Policy, 'X-Amz-Signature': xAmzSignature } = preUrl.fields;
+        // Prepare the form data
+        const formData = new form_data_1.default();
+        formData.append('bucket', bucket);
+        formData.append('X-Amz-Algorithm', xAmzAlgorithm);
+        formData.append('X-Amz-Credential', xAmzCredential);
+        formData.append('X-Amz-Date', xAmzDate);
+        formData.append('key', key);
+        formData.append('Policy', Policy);
+        formData.append('X-Amz-Signature', xAmzSignature);
+        formData.append('file', fs_1.default.createReadStream(filePath)); // Attach the file
+        // Make the POST request to upload the file
+        const result = yield axios_1.default.post(url, formData, {
+            headers: Object.assign(Object.assign({}, formData.getHeaders()), { 'Content-Type': 'application/gzip' }),
+        });
+        console.log("File uploaded successfully:", result.data);
+    }
+    catch (error) {
+        //@ts-ignore
+        console.log(cli_color_1.default.redBright("Error uploading file:", error.message));
+        //@ts-ignore
+        console.log(((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message); // Additional error info
+    }
 });
 exports.uploadFile = uploadFile;

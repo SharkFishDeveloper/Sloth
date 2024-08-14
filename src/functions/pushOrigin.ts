@@ -7,21 +7,20 @@ import { zipFiles } from "./zipFiles";
 import fs from "fs"
 import { uploadFile } from "./uploadFile";
 
-export async function initOriginMethod() {
+export async function pushOriginOwner() {
     try {
-        const a = path.join(process.cwd());
-        // console.log(b)
-        // return;
-        //! should i also include "dist"
-        const files =  getAllFiles(a);
-        console.log("STARt")
-        // console.log(files);
-        await zipFiles(files);
-        console.log("END")
         const reponame = await promptQuestion('Enter Repo name: ')
         const email = await promptQuestion('Enter your username: ');
         const password = await promptQuestion('Enter your password: ');
-        const result = await axios.post(`http://localhost:3000/init`,{reponame,email,password});
+        const result = await axios.post(`http://localhost:3000/push`,{reponame,email,password});
+        if(!result.data.id){
+            return console.log(clc.redBright(result.data.message))
+        }
+        const a = path.join(process.cwd());
+        const files =  getAllFiles(a);
+
+        await zipFiles(files);
+        
         const preUrl = result.data.message;
         const userId = result.data.id;
         await uploadFile(preUrl,userId);

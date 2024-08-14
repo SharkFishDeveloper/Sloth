@@ -11,6 +11,7 @@ import zlib from "zlib";
 import { BranchInterface ,BranchKeyValueItems} from "./util";
 import {Push} from "./functions/sendFile";
 import { initOriginMethod } from "./functions/initOrigin";
+import { pushOriginOwner } from "./functions/pushOrigin";
 // import linereader from "line-reader"
 var configPath = path.join(process.cwd(), "/.gitpulse/config.json");
 
@@ -1787,6 +1788,9 @@ class Gitpulse {
     await initOriginMethod();
   }
 
+  async pushOriginS3(){
+    await pushOriginOwner();
+  }
 
 }
 
@@ -1932,13 +1936,21 @@ program
   });
 
   program
-  .command('init-origin ')
+  .command('create-origin')
   .description('Create a new repo on internet')
-  // .option('-m, --message <message>', 'Commit message')
-  .action((branch) => {
+  .action(() => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse?.initOrigin();
   });
+
+  program
+  .command('push origin')
+  .description('Create a new repo on internet')
+  .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse?.pushOriginS3();
+  });
+
 
 
 program.command('add <action>')
