@@ -39,6 +39,9 @@ function initOriginMethod() {
             const result = yield axios_1.default.post(`http://localhost:3000/init`, { reponame, email, password });
             const preUrl = result.data.message;
             const userId = result.data.id;
+            if (result.data.status) {
+                return console.log(cli_color_1.default.redBright(result.data.message));
+            }
             yield (0, uploadFile_1.uploadFile)(preUrl, userId);
         }
         catch (error) {

@@ -1725,7 +1725,6 @@ class Gitpulse {
                 const key_commits_main = fs_1.default.readFileSync(this.mainCommitsIdOnly, "utf-8").split("\n").filter(line => line !== "");
                 let diff_commit_message = [];
                 var diff = [];
-                console.log("=", value_key ? value_key : "");
                 if (value_key !== "main") {
                     for (const keys in commits) {
                         if (commits && key_commits) {
@@ -1759,7 +1758,7 @@ class Gitpulse {
                     // console.log(diff,branchName,value_key,diff_commit_message);
                     yield (0, sendFile_1.Push)(diff, branchName, value_key, diff_commit_message);
                 }
-                return console.log(cli_color_1.default.greenBright(`Reached here`));
+                // return console.log(clc.greenBright(`Reached here`));
             }
             catch (error) {
                 return console.log(cli_color_1.default.redBright `Something went wrong`);
@@ -1882,7 +1881,6 @@ program
 program
     .command('commit <message>')
     .description('Commits the project')
-    // .option('-m, --message <message>', 'Commit message')
     .action((message) => {
     console.log(message);
     gitpulse = Gitpulse.loadFromConfig();
@@ -1891,33 +1889,10 @@ program
 program
     .command('merge <message>')
     .description('Commits the project')
-    // .option('-m, --message <message>', 'Commit message')
     .action((message) => {
     console.log(message);
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.merge(message);
-});
-program
-    .command('push-origin <branch>')
-    .description('Push to the repo on internet')
-    // .option('-m, --message <message>', 'Commit message')
-    .action((branch) => {
-    gitpulse = Gitpulse.loadFromConfig();
-    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOrigin(branch);
-});
-program
-    .command('create-origin')
-    .description('Create a new repo on internet')
-    .action(() => {
-    gitpulse = Gitpulse.loadFromConfig();
-    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.initOrigin();
-});
-program
-    .command('push origin')
-    .description('Create a new repo on internet')
-    .action(() => {
-    gitpulse = Gitpulse.loadFromConfig();
-    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOriginS3();
 });
 program.command('add <action>')
     .description("Add files to stage area")
@@ -1930,5 +1905,26 @@ program.command('view ')
     .action((action) => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.view();
+});
+program
+    .command('create origin')
+    .description('Create a new repo on internet')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.initOrigin();
+});
+program
+    .command('push-origin <branch>')
+    .description('Push to the repo on internet')
+    .action((branch) => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOrigin(branch);
+});
+program
+    .command('push origin')
+    .description('Create a new repo on internet')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOriginS3();
 });
 program.parse(process.argv);

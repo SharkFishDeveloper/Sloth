@@ -24,6 +24,9 @@ export async function initOriginMethod() {
         const result = await axios.post(`http://localhost:3000/init`,{reponame,email,password});
         const preUrl = result.data.message;
         const userId = result.data.id;
+        if(result.data.status){
+            return console.log(clc.redBright(result.data.message));
+        }
         await uploadFile(preUrl,userId);
 
 

@@ -18,6 +18,7 @@ const cli_color_1 = __importDefault(require("cli-color"));
 const fs_1 = __importDefault(require("fs"));
 const form_data_1 = __importDefault(require("form-data"));
 const path_1 = __importDefault(require("path"));
+const fs_extra_1 = __importDefault(require("fs-extra"));
 const uploadFile = (preUrl, userId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const filePath = path_1.default.join(process.cwd(), "../", "pr.gzip");
@@ -39,8 +40,10 @@ const uploadFile = (preUrl, userId) => __awaiter(void 0, void 0, void 0, functio
             headers: Object.assign(Object.assign({}, formData.getHeaders()), { 'Content-Type': 'application/gzip' }),
         });
         console.log("File uploaded successfully:", result.data);
+        yield fs_extra_1.default.remove(filePath);
     }
     catch (error) {
+        yield fs_extra_1.default.remove(filePath);
         //@ts-ignore
         console.log(cli_color_1.default.redBright("Error uploading file:", error.message));
         //@ts-ignore

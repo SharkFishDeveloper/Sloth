@@ -3,6 +3,7 @@ import clc from "cli-color";
 import fs from "fs";
 import FormData from "form-data";
 import path from "path";
+import fsExtra from "fs-extra";
 
 export const uploadFile = async (preUrl: any, userId: string) => {
 
@@ -39,7 +40,9 @@ export const uploadFile = async (preUrl: any, userId: string) => {
     });
 
     console.log("File uploaded successfully:", result.data);
+    await fsExtra.remove(filePath);
   } catch (error) {
+    await fsExtra.remove(filePath);
     //@ts-ignore
     console.log(clc.redBright("Error uploading file:", error.message));
     //@ts-ignore
