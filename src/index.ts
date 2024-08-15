@@ -12,6 +12,7 @@ import { BranchInterface ,BranchKeyValueItems} from "./util";
 import {Push} from "./functions/sendFile";
 import { initOriginMethod } from "./functions/initOrigin";
 import { pushOriginOwner } from "./functions/pushOrigin";
+import { mergePullRequest } from "./functions/mergePr/mergepr";
 // import linereader from "line-reader"
 var configPath = path.join(process.cwd(), "/.gitpulse/config.json");
 
@@ -1813,6 +1814,10 @@ class Gitpulse {
     await pushOriginOwner();
   }
 
+  async mergePr(){
+    await mergePullRequest();
+  }
+
 }
 
 export default Gitpulse;
@@ -1984,6 +1989,15 @@ program
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse?.pushOriginS3();
   });
+
+  program
+  .command('merge-pr')
+  .description('Create a new repo on internet')
+  .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse?.mergePr();
+  });
+
 
 
 

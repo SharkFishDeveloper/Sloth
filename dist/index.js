@@ -47,6 +47,7 @@ const zlib_1 = __importDefault(require("zlib"));
 const sendFile_1 = require("./functions/sendFile");
 const initOrigin_1 = require("./functions/initOrigin");
 const pushOrigin_1 = require("./functions/pushOrigin");
+const mergepr_1 = require("./functions/mergePr/mergepr");
 // import linereader from "line-reader"
 var configPath = path_1.default.join(process.cwd(), "/.gitpulse/config.json");
 class Gitpulse {
@@ -1792,6 +1793,11 @@ class Gitpulse {
             yield (0, pushOrigin_1.pushOriginOwner)();
         });
     }
+    mergePr() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, mergepr_1.mergePullRequest)();
+        });
+    }
 }
 exports.default = Gitpulse;
 const program = new commander_1.Command();
@@ -1943,5 +1949,12 @@ program
     .action(() => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOriginS3();
+});
+program
+    .command('merge-pr')
+    .description('Create a new repo on internet')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.mergePr();
 });
 program.parse(process.argv);
