@@ -1,46 +1,43 @@
 import axios from "axios";
 import path from "path";
 import fs from "fs"
+import clc from "cli-color";
+import fsExtra from "fs-extra"
 
 export async function downloadPr(preUrl:any) {
+    const downloadfilePath = path.join(process.cwd(),"../","merge")
+    await fsExtra.mkdirp(downloadfilePath); 
    try {
-    const fullUrl= preUrl.url;
-    const {
-      bucket,
-      'X-Amz-Algorithm': xAmzAlgorithm,
-      'X-Amz-Credential': xAmzCredential,
-      'X-Amz-Date': xAmzDate,
-      key,
-      Policy,
-      'X-Amz-Signature': xAmzSignature
-    } = preUrl.fields;
 
-    // Prepare the form data
-    const formData = new FormData();
-    formData.append('bucket', bucket);
-    formData.append('X-Amz-Algorithm', xAmzAlgorithm);
-    formData.append('X-Amz-Credential', xAmzCredential);
-    formData.append('X-Amz-Date', xAmzDate);
-    formData.append('key', key);
-    formData.append('Policy', Policy);
-    formData.append('X-Amz-Signature', xAmzSignature);
-    const response = await axios.get(fullUrl, { responseType: 'stream' });
-    const downloadfilePath = path.join(process.cwd(),"../");
+    const response = await axios.get(preUrl,{ responseType: 'stream' });
 
-     // Create a write stream to save the file
-     const writer = fs.createWriteStream(downloadfilePath);
- 
-     // Pipe the response data to the file
-     response.data.pipe(writer);
- 
-     writer.on('finish', () => {
-       console.log('File downloaded successfully');
-     });
- 
-     writer.on('error', (err) => {
-       console.error('Error writing file:', err);
-     });
+    // Validate response status code
+    if (response.status !== 200) {
+      throw new Error(`Error downloading file: ${response.status}`);
+    }
+
+    const writer = fs.createWriteStream(downloadfilePath);
+
+    await new Promise((resolve, reject) => {
+      response.data.pipe(writer)
+        .on('finish', () => resolve(downloadfilePath))
+        .on('error', reject);
+    });
+
+    console.log(`File successfully downloaded to: ${downloadfilePath}`);
+
    } catch (error) {
-        console.log(error)
+    //@ts-ignore
+    console.log(error)
+    if (axios.isAxiosError(error)) {
+        console.log(clc.redBright(`Status: ${error.response?.status}`));
+        console.log(clc.redBright(`Data: ${JSON.stringify(error.response?.data)}`));
+        console.log(clc.redBright(`Headers: ${JSON.stringify(error.response?.headers)}`));
+    } else if (error instanceof Error) {
+        console.log(clc.redBright("Error:"));
+        console.log(clc.redBright(error.message));
+    } else {
+        console.log(clc.redBright("Unexpected error:", error));
+    }
    }
 }

@@ -16,6 +16,7 @@ exports.mergePullRequest = void 0;
 const axios_1 = __importDefault(require("axios"));
 const sendFile_1 = require("../sendFile");
 const clc = require("cli-color");
+const downloadPr_1 = require("../downloadPr/downloadPr");
 function mergePullRequest() {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
@@ -28,10 +29,9 @@ function mergePullRequest() {
             if (result.data.status) {
                 return console.log(clc.redBright(result.data.message));
             }
-            console.log(result.data.message);
+            yield (0, downloadPr_1.downloadPr)(result.data.message);
         }
         catch (error) {
-            console.log(error);
             if (axios_1.default.isAxiosError(error)) {
                 console.log(clc.redBright(`Status: ${(_a = error.response) === null || _a === void 0 ? void 0 : _a.status}`));
                 console.log(clc.redBright(`Data: ${JSON.stringify((_b = error.response) === null || _b === void 0 ? void 0 : _b.data)}`));

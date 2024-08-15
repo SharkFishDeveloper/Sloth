@@ -13,6 +13,7 @@
     "@types/node": "^20.14.12"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.632.0",
     "@types/archiver": "^6.0.2",
     "@types/cli-color": "^2.0.6",
     "@types/commander": "^2.12.2",

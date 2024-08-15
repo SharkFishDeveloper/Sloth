@@ -13,12 +13,11 @@ export async function mergePullRequest() {
         if(result.data.status){
             return console.log(clc.redBright(result.data.message))
         }
-
         await downloadPr(result.data.message);
 
 
+
     } catch (error) {
-        console.log(error)
         if (axios.isAxiosError(error)) {
             console.log(clc.redBright(`Status: ${error.response?.status}`));
             console.log(clc.redBright(`Data: ${JSON.stringify(error.response?.data)}`));
