@@ -1161,9 +1161,18 @@ class Gitpulse {
       const data = fs.readFileSync(this.branchesHistorykeymap, 'utf8');
       const items: BranchKeyValueItems = data ? JSON.parse(data) : {};
 
-      // Update items with the new branch name
-      const writeData = { ...items, [currentBranchName]: branchName };
+      const writeData = { ...items };
 
+      // Ensure the current branch key exists and is an array
+      if (!writeData[currentBranchName]) {
+        writeData[currentBranchName] = [branchName];
+      }
+      
+      // Add the new branch name to the array for the current branch key
+      if (!writeData[currentBranchName].includes(branchName)) {
+        writeData[currentBranchName].push(branchName);
+      }
+      
       // Write updated items back to the JSON file
       fs.writeFileSync(this.branchesHistorykeymap, JSON.stringify(writeData, null, 2), 'utf8');
 
@@ -1183,8 +1192,18 @@ class Gitpulse {
     const items: BranchKeyValueItems = data ? JSON.parse(data) : {};
 
     // Update items with the new branch name
-    const writeData = { ...items, [currentBranchName]: branchName };
+    const writeData = { ...items };
 
+    // Ensure the current branch key exists and is an array
+    if (!writeData[currentBranchName]) {
+      writeData[currentBranchName] = [branchName];
+    }
+    
+    // Add the new branch name to the array for the current branch key
+    if (!writeData[currentBranchName].includes(branchName)) {
+      writeData[currentBranchName].push(branchName);
+    }
+    
     // Write updated items back to the JSON file
     fs.writeFileSync(this.branchesHistorykeymap, JSON.stringify(writeData, null, 2), 'utf8');
     console.log(clc.cyanBright(`Switched from ${currentBranchName} -> ${branchName}`));
@@ -1726,11 +1745,13 @@ class Gitpulse {
       let parentB  = fs.readFileSync(this.branchesHistorykeymap,"utf-8");
       const parentBranch = parentB ? JSON.parse(parentB):null;
       let value_key = "";
-      if (parentBranch) {
+      if (parentBranch && typeof parentBranch === 'object') {
         // Iterate over the object to find the key for the given value
         for (const [key, value] of Object.entries(parentBranch)) {
-          if (value === branchName) {
+          // Ensure the value is an array and contains the branchName
+          if (Array.isArray(value) && value.includes(branchName)) {
             value_key = key;
+            break; // Stop iterating once the key is found
           }
         }
       }

@@ -41,7 +41,7 @@ export const getAllFilesForPR = (folderPath: string): string[] => {
 
 
 export async function Push(diff: string[], branchname: string, parentBranch: string, history: any) {
-  console.log(diff,branchname,parentBranch,history);
+  console.log(diff,"branchname",branchname,"parentBranch",parentBranch,history);
   const messages:string[] = [];
 
   for(const id in history){

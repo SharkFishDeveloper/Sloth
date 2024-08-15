@@ -1151,8 +1151,15 @@ class Gitpulse {
                 // Read current items from the JSON file
                 const data = fs_1.default.readFileSync(this.branchesHistorykeymap, 'utf8');
                 const items = data ? JSON.parse(data) : {};
-                // Update items with the new branch name
-                const writeData = Object.assign(Object.assign({}, items), { [currentBranchName]: branchName });
+                const writeData = Object.assign({}, items);
+                // Ensure the current branch key exists and is an array
+                if (!writeData[currentBranchName]) {
+                    writeData[currentBranchName] = [branchName];
+                }
+                // Add the new branch name to the array for the current branch key
+                if (!writeData[currentBranchName].includes(branchName)) {
+                    writeData[currentBranchName].push(branchName);
+                }
                 // Write updated items back to the JSON file
                 fs_1.default.writeFileSync(this.branchesHistorykeymap, JSON.stringify(writeData, null, 2), 'utf8');
                 return;
@@ -1170,7 +1177,15 @@ class Gitpulse {
             const data = fs_1.default.readFileSync(this.branchesHistorykeymap, 'utf8');
             const items = data ? JSON.parse(data) : {};
             // Update items with the new branch name
-            const writeData = Object.assign(Object.assign({}, items), { [currentBranchName]: branchName });
+            const writeData = Object.assign({}, items);
+            // Ensure the current branch key exists and is an array
+            if (!writeData[currentBranchName]) {
+                writeData[currentBranchName] = [branchName];
+            }
+            // Add the new branch name to the array for the current branch key
+            if (!writeData[currentBranchName].includes(branchName)) {
+                writeData[currentBranchName].push(branchName);
+            }
             // Write updated items back to the JSON file
             fs_1.default.writeFileSync(this.branchesHistorykeymap, JSON.stringify(writeData, null, 2), 'utf8');
             console.log(cli_color_1.default.cyanBright(`Switched from ${currentBranchName} -> ${branchName}`));
@@ -1710,11 +1725,13 @@ class Gitpulse {
                 let parentB = fs_1.default.readFileSync(this.branchesHistorykeymap, "utf-8");
                 const parentBranch = parentB ? JSON.parse(parentB) : null;
                 let value_key = "";
-                if (parentBranch) {
+                if (parentBranch && typeof parentBranch === 'object') {
                     // Iterate over the object to find the key for the given value
                     for (const [key, value] of Object.entries(parentBranch)) {
-                        if (value === branchName) {
+                        // Ensure the value is an array and contains the branchName
+                        if (Array.isArray(value) && value.includes(branchName)) {
                             value_key = key;
+                            break; // Stop iterating once the key is found
                         }
                     }
                 }

@@ -50,7 +50,7 @@ const getAllFilesForPR = (folderPath) => {
 exports.getAllFilesForPR = getAllFilesForPR;
 function Push(diff, branchname, parentBranch, history) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(diff, branchname, parentBranch, history);
+        console.log(diff, "branchname", branchname, "parentBranch", parentBranch, history);
         const messages = [];
         for (const id in history) {
             const entry = history[id];
