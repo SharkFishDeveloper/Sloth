@@ -81,7 +81,7 @@ async function extractZip(zipFilePath: string, outputDir: string) {
   async function copySlothFolderAndRemoveZip(yourRepoName:string , downloadDir:string) {
     // const destPath = path.join(process.cwd(),"../","abc");
     const destPath = path.join(process.cwd(),"/.gitpulse");
-    const deletGitpulse = path.join(destPath,"Sloth","/.gitpulse");
+    const deletGitpulse = path.join(destPath,"/.gitpulse");
     const pathname = path.join(downloadDir,yourRepoName)
     await fsExtra.emptyDir(deletGitpulse);
     console.log(pathname,destPath)

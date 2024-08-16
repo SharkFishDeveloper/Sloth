@@ -89,8 +89,9 @@ function extractZip(zipFilePath, outputDir) {
 }
 function copySlothFolderAndRemoveZip(yourRepoName, downloadDir) {
     return __awaiter(this, void 0, void 0, function* () {
-        const destPath = path_1.default.join(process.cwd(), "../", "abc");
-        const deletGitpulse = path_1.default.join(destPath, "Sloth", "/.gitpulse");
+        // const destPath = path.join(process.cwd(),"../","abc");
+        const destPath = path_1.default.join(process.cwd(), "/.gitpulse");
+        const deletGitpulse = path_1.default.join(destPath, "/.gitpulse");
         const pathname = path_1.default.join(downloadDir, yourRepoName);
         yield fs_extra_1.default.emptyDir(deletGitpulse);
         console.log(pathname, destPath);
