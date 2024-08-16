@@ -27,27 +27,30 @@ function pullOriginDownload(preUrl) {
         const filename = path_1.default.basename(new URL(preUrl).pathname);
         const downloadfilePath = path_1.default.join(downloadDir, filename);
         yield fs_extra_1.default.mkdirp(downloadDir);
+        //   const src = path.join(process.cwd());
+        //   const dist = path.join(process.cwd(),"../","abc","Sloth");
+        //   await fsExtra.copy(src,dist);
+        // return;
         try {
             const response = yield axios_1.default.get(preUrl, { responseType: 'stream' });
-            // Validate response status code
             if (response.status !== 200) {
                 throw new Error(`Error downloading file: ${response.status}`);
             }
-            // const writer = fs.createWriteStream(downloadfilePath);
-            // await new Promise((resolve, reject) => {
-            //   response.data.pipe(writer)
-            //     .on('finish', () => resolve(downloadfilePath))
-            //     .on('error', reject);
-            // });
+            const writer = fs_1.default.createWriteStream(downloadfilePath);
+            yield new Promise((resolve, reject) => {
+                response.data.pipe(writer)
+                    .on('finish', () => resolve(downloadfilePath))
+                    .on('error', reject);
+            });
             const yourRepoName = path_1.default.basename(path_1.default.join(process.cwd(), "../"));
             console.log(`File successfully downloaded to: ${downloadfilePath}`);
             yield extractZip(downloadfilePath, extractedZipDir);
-            // fs.readdir(downloadDir,async(err,files)=>{
-            //   if(!files.includes(yourRepoName)){
-            //     console.log(clc.yellowBright(`First download it, and then you can pull latest changes*`));
-            //     await fsExtra.remove(downloadDir);
-            //   }
-            // })
+            fs_1.default.readdir(downloadDir, (err, files) => __awaiter(this, void 0, void 0, function* () {
+                if (!files.includes(yourRepoName)) {
+                    console.log(cli_color_1.default.yellowBright(`First download it, and then you can pull latest changes*`));
+                    yield fs_extra_1.default.remove(downloadDir);
+                }
+            }));
             yield copySlothFolderAndRemoveZip(yourRepoName, downloadDir);
         }
         catch (error) {
@@ -86,8 +89,11 @@ function extractZip(zipFilePath, outputDir) {
 }
 function copySlothFolderAndRemoveZip(yourRepoName, downloadDir) {
     return __awaiter(this, void 0, void 0, function* () {
+        const destPath = path_1.default.join(process.cwd(), "../", "abc");
+        const deletGitpulse = path_1.default.join(destPath, "Sloth", "/.gitpulse");
         const pathname = path_1.default.join(downloadDir, yourRepoName);
-        console.log(pathname, path_1.default.join(process.cwd(), "../"));
-        fs_extra_1.default.copy(pathname, path_1.default.join(process.cwd(), "../"));
+        yield fs_extra_1.default.emptyDir(deletGitpulse);
+        console.log(pathname, destPath);
+        fs_extra_1.default.copy(pathname, destPath, { overwrite: true });
     });
 }

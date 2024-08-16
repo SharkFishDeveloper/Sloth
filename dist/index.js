@@ -48,6 +48,7 @@ const sendFile_1 = require("./functions/sendFile");
 const initOrigin_1 = require("./functions/initOrigin");
 const pushOrigin_1 = require("./functions/pushOrigin");
 const mergepr_1 = require("./functions/mergePr/mergepr");
+const pullOrigin_1 = require("./functions/pullOrigin/pullOrigin");
 // import linereader from "line-reader"
 var configPath = path_1.default.join(process.cwd(), "/.gitpulse/config.json");
 class Gitpulse {
@@ -1798,6 +1799,11 @@ class Gitpulse {
             yield (0, mergepr_1.mergePullRequest)();
         });
     }
+    pullOrigin() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, pullOrigin_1.pullOriginRequest)();
+        });
+    }
 }
 exports.default = Gitpulse;
 const program = new commander_1.Command();
@@ -1956,5 +1962,12 @@ program
     .action(() => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.mergePr();
+});
+program
+    .command('pull origin')
+    .description('Pulls the latest changes of repository')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pullOrigin();
 });
 program.parse(process.argv);

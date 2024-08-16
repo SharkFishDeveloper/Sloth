@@ -1818,11 +1818,10 @@ class Gitpulse {
   async mergePr(){
     await mergePullRequest();
   }
+
   async pullOrigin(){
     await pullOriginRequest();
   }
-
-
 }
 
 export default Gitpulse;
@@ -2004,6 +2003,13 @@ program
   });
 
 
+  program
+  .command('pull origin')
+  .description('Pulls the latest changes of repository')
+  .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse?.pullOrigin();
+  });
 
 
 
