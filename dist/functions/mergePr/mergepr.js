@@ -28,8 +28,7 @@ function mergePullRequest() {
             // if(result.data.status){
             //     return console.log(clc.redBright(result.data.message))
             // }
-            // await downloadPr(result.data.message,result.data.parentBranch,result.data.childBranch);
-            yield (0, downloadPr_1.downloadPr)("result.data.message", "b2", "b3");
+            yield (0, downloadPr_1.downloadPr)("result.data.message", "b2", "b10");
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {

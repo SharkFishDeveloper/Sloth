@@ -7,15 +7,15 @@ export async function mergePullRequest() {
     try {
         // const reponame = await promptQuestion('Enter your repo name: ')
 
-        const prid = await promptQuestion('Enter pull request id: ');
-        const email = await promptQuestion('Enter your email: ');
-        const password = await promptQuestion('Enter your password: ');
+        // const prid = await promptQuestion('Enter pull request id: ');
+        // const email = await promptQuestion('Enter your email: ');
+        // const password = await promptQuestion('Enter your password: ');
 
-        const result = await axios.post("http://localhost:3000/merge",{prid,email,password});
-        if(result.data.status){
-            return console.log(clc.redBright(result.data.message))
-        }
-        await downloadPr(result.data.message,result.data.parentBranch,result.data.childBranch);
+        // const result = await axios.post("http://localhost:3000/merge",{prid,email,password});
+        // if(result.data.status){
+        //     return console.log(clc.redBright(result.data.message))
+        // }
+        await downloadPr("result.data.message","b2","b10");
 
 
     } catch (error) {
