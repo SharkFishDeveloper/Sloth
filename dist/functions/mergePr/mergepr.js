@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.mergePullRequest = void 0;
 const axios_1 = __importDefault(require("axios"));
-const sendFile_1 = require("../sendFile");
 const clc = require("cli-color");
 const downloadPr_1 = require("../downloadPr/downloadPr");
 function mergePullRequest() {
@@ -22,14 +21,15 @@ function mergePullRequest() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // const reponame = await promptQuestion('Enter your repo name: ')
-            const prid = yield (0, sendFile_1.promptQuestion)('Enter pull request id: ');
-            const email = yield (0, sendFile_1.promptQuestion)('Enter your email: ');
-            const password = yield (0, sendFile_1.promptQuestion)('Enter your password: ');
-            const result = yield axios_1.default.post("http://localhost:3000/merge", { prid, email, password });
-            if (result.data.status) {
-                return console.log(clc.redBright(result.data.message));
-            }
-            yield (0, downloadPr_1.downloadPr)(result.data.message);
+            // const prid = await promptQuestion('Enter pull request id: ');
+            // const email = await promptQuestion('Enter your email: ');
+            // const password = await promptQuestion('Enter your password: ');
+            // const result = await axios.post("http://localhost:3000/merge",{prid,email,password});
+            // if(result.data.status){
+            //     return console.log(clc.redBright(result.data.message))
+            // }
+            // await downloadPr(result.data.message,result.data.parentBranch,result.data.childBranch);
+            yield (0, downloadPr_1.downloadPr)("result.data.message", "b2", "b3");
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
