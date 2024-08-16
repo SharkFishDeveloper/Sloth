@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadPr = void 0;
+const axios_1 = __importDefault(require("axios"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const cli_color_1 = __importDefault(require("cli-color"));
@@ -20,42 +21,46 @@ const fs_extra_1 = __importDefault(require("fs-extra"));
 const unzipper_1 = __importDefault(require("unzipper"));
 const zlib_1 = __importDefault(require("zlib"));
 function downloadPr(preUrl, parentBranch, childBranch) {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const downloadDir = path_1.default.join(process.cwd(), "../", "merge", "pr");
         const extractedZipDir = path_1.default.join(process.cwd(), "../", "merge", "pr", "extracted");
         yield writeBranchChangesTxt(extractedZipDir, parentBranch, childBranch);
-        // await copyAndPasteBranchesAndCommits(extractedZipDir);
-        // const filename = path.basename(new URL(preUrl).pathname); 
-        // const downloadfilePath = path.join(downloadDir, filename);
-        // await fsExtra.mkdirp(downloadDir);
-        //  try {
-        //   const response = await axios.get(preUrl,{ responseType: 'stream' });
-        //   // Validate response status code
-        //   if (response.status !== 200) {
-        //     throw new Error(`Error downloading file: ${response.status}`);
-        //   }
-        //   const writer = fs.createWriteStream(downloadfilePath);
-        //   await new Promise((resolve, reject) => {
-        //     response.data.pipe(writer)
-        //       .on('finish', () => resolve(downloadfilePath))
-        //       .on('error', reject);
-        //   });
-        //   console.log(`File successfully downloaded to: ${downloadfilePath}`);
-        //   await extractZip(downloadfilePath, extractedZipDir);
-        //  } catch (error) {
-        //   //@ts-ignore
-        //   console.log(error)
-        //   if (axios.isAxiosError(error)) {
-        //       console.log(clc.redBright(`Status: ${error.response?.status}`));
-        //       console.log(clc.redBright(`Data: ${JSON.stringify(error.response?.data)}`));
-        //       console.log(clc.redBright(`Headers: ${JSON.stringify(error.response?.headers)}`));
-        //   } else if (error instanceof Error) {
-        //       console.log(clc.redBright("Error:"));
-        //       console.log(clc.greenBright(error.message));
-        //   } else {
-        //       console.log(clc.redBright("Unexpected error:", error));
-        //   }
-        //  }
+        yield copyAndPasteBranchesAndCommits(extractedZipDir);
+        const filename = path_1.default.basename(new URL(preUrl).pathname);
+        const downloadfilePath = path_1.default.join(downloadDir, filename);
+        yield fs_extra_1.default.mkdirp(downloadDir);
+        try {
+            const response = yield axios_1.default.get(preUrl, { responseType: 'stream' });
+            // Validate response status code
+            if (response.status !== 200) {
+                throw new Error(`Error downloading file: ${response.status}`);
+            }
+            const writer = fs_1.default.createWriteStream(downloadfilePath);
+            yield new Promise((resolve, reject) => {
+                response.data.pipe(writer)
+                    .on('finish', () => resolve(downloadfilePath))
+                    .on('error', reject);
+            });
+            console.log(`File successfully downloaded to: ${downloadfilePath}`);
+            yield extractZip(downloadfilePath, extractedZipDir);
+        }
+        catch (error) {
+            //@ts-ignore
+            // console.log(error)
+            if (axios_1.default.isAxiosError(error)) {
+                console.log(cli_color_1.default.redBright(`Status: ${(_a = error.response) === null || _a === void 0 ? void 0 : _a.status}`));
+                console.log(cli_color_1.default.redBright(`Data: ${JSON.stringify((_b = error.response) === null || _b === void 0 ? void 0 : _b.data)}`));
+                console.log(cli_color_1.default.redBright(`Headers: ${JSON.stringify((_c = error.response) === null || _c === void 0 ? void 0 : _c.headers)}`));
+            }
+            else if (error instanceof Error) {
+                console.log(cli_color_1.default.redBright("Error:"));
+                console.log(cli_color_1.default.greenBright(error.message));
+            }
+            else {
+                console.log(cli_color_1.default.redBright("Unexpected error:", error));
+            }
+        }
     });
 }
 exports.downloadPr = downloadPr;
@@ -85,6 +90,7 @@ function copyAndPasteBranchesAndCommits(extractedZipDir) {
             // Copy the entire CHANGES directory to the branchesObjPath
             yield fs_extra_1.default.copy(changesDir, branchesObjPath);
             console.log(cli_color_1.default.greenBright(`Merged PR changes successfully`));
+            console.log(cli_color_1.default.bgYellowBright(`This is not saved, to save it you need to run < push origin >`));
             yield fs_extra_1.default.remove(downloadDir);
         }
         catch (err) {
@@ -107,7 +113,7 @@ function writeBranchChangesTxt(writeBranchChangesTxt, parentBranch, childBranch)
             if (!parsedBranchesJsonData[parentBranch]) {
                 return console.log(cli_color_1.default.redBright(`Parent branch - ${parentBranch} does not exist`));
             }
-            // fs.writeFileSync(path.join(process.cwd(),"/.gitpulse","BRANCHES.json"), JSON.stringify(parsedBranchesJsonData, null, 2), "utf-8");
+            fs_1.default.writeFileSync(path_1.default.join(process.cwd(), "/.gitpulse", "BRANCHES.json"), JSON.stringify(parsedBranchesJsonData, null, 2), "utf-8");
             const branchesHistorykeymap = fs_1.default.readFileSync(path_1.default.join(process.cwd(), "/.gitpulse", "Branch_Key_Value.json"), "utf-8");
             let parsedBranchesJsonDataKeyMap;
             if (branchesHistorykeymap.trim() === "") {

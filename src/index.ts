@@ -13,6 +13,7 @@ import {Push} from "./functions/sendFile";
 import { initOriginMethod } from "./functions/initOrigin";
 import { pushOriginOwner } from "./functions/pushOrigin";
 import { mergePullRequest } from "./functions/mergePr/mergepr";
+import { pullOriginRequest } from "./functions/pullOrigin/pullOrigin";
 // import linereader from "line-reader"
 var configPath = path.join(process.cwd(), "/.gitpulse/config.json");
 
@@ -1818,6 +1819,10 @@ class Gitpulse {
     await mergePullRequest();
   }
 
+  async pullOrigin(){
+    await pullOriginRequest();
+  }
+
 }
 
 export default Gitpulse;
@@ -1997,6 +2002,16 @@ program
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse?.mergePr();
   });
+
+  program
+  .command('pull origin')
+  .description('Fetches the latest repo')
+  .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse?.pullOrigin();
+  });
+
+
 
 
 

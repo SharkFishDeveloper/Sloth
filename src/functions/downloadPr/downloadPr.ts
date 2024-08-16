@@ -12,47 +12,47 @@ export async function downloadPr(preUrl:any,parentBranch:string,childBranch:stri
     const downloadDir = path.join(process.cwd(), "../", "merge", "pr");
     const extractedZipDir = path.join(process.cwd(), "../", "merge", "pr","extracted");
     await writeBranchChangesTxt(extractedZipDir,parentBranch,childBranch);
-    // await copyAndPasteBranchesAndCommits(extractedZipDir);
-    // const filename = path.basename(new URL(preUrl).pathname); 
-    // const downloadfilePath = path.join(downloadDir, filename);
-    // await fsExtra.mkdirp(downloadDir);
+    await copyAndPasteBranchesAndCommits(extractedZipDir);
+    const filename = path.basename(new URL(preUrl).pathname); 
+    const downloadfilePath = path.join(downloadDir, filename);
+    await fsExtra.mkdirp(downloadDir);
 
-  //  try {
+   try {
 
-  //   const response = await axios.get(preUrl,{ responseType: 'stream' });
+    const response = await axios.get(preUrl,{ responseType: 'stream' });
 
-  //   // Validate response status code
-  //   if (response.status !== 200) {
-  //     throw new Error(`Error downloading file: ${response.status}`);
-  //   }
+    // Validate response status code
+    if (response.status !== 200) {
+      throw new Error(`Error downloading file: ${response.status}`);
+    }
     
-  //   const writer = fs.createWriteStream(downloadfilePath);
-    
-
-  //   await new Promise((resolve, reject) => {
-  //     response.data.pipe(writer)
-  //       .on('finish', () => resolve(downloadfilePath))
-  //       .on('error', reject);
-  //   });
-
-  //   console.log(`File successfully downloaded to: ${downloadfilePath}`);
-  //   await extractZip(downloadfilePath, extractedZipDir);
+    const writer = fs.createWriteStream(downloadfilePath);
     
 
-  //  } catch (error) {
-  //   //@ts-ignore
-  //   console.log(error)
-  //   if (axios.isAxiosError(error)) {
-  //       console.log(clc.redBright(`Status: ${error.response?.status}`));
-  //       console.log(clc.redBright(`Data: ${JSON.stringify(error.response?.data)}`));
-  //       console.log(clc.redBright(`Headers: ${JSON.stringify(error.response?.headers)}`));
-  //   } else if (error instanceof Error) {
-  //       console.log(clc.redBright("Error:"));
-  //       console.log(clc.greenBright(error.message));
-  //   } else {
-  //       console.log(clc.redBright("Unexpected error:", error));
-  //   }
-  //  }
+    await new Promise((resolve, reject) => {
+      response.data.pipe(writer)
+        .on('finish', () => resolve(downloadfilePath))
+        .on('error', reject);
+    });
+
+    console.log(`File successfully downloaded to: ${downloadfilePath}`);
+    await extractZip(downloadfilePath, extractedZipDir);
+    
+
+   } catch (error) {
+    //@ts-ignore
+    // console.log(error)
+    if (axios.isAxiosError(error)) {
+        console.log(clc.redBright(`Status: ${error.response?.status}`));
+        console.log(clc.redBright(`Data: ${JSON.stringify(error.response?.data)}`));
+        console.log(clc.redBright(`Headers: ${JSON.stringify(error.response?.headers)}`));
+    } else if (error instanceof Error) {
+        console.log(clc.redBright("Error:"));
+        console.log(clc.greenBright(error.message));
+    } else {
+        console.log(clc.redBright("Unexpected error:", error));
+    }
+   }
 }
 
 
@@ -82,6 +82,7 @@ async function extractZip(zipFilePath: string, outputDir: string) {
         // Copy the entire CHANGES directory to the branchesObjPath
         await fsExtra.copy(changesDir, branchesObjPath);
         console.log(clc.greenBright(`Merged PR changes successfully`));
+        console.log(clc.bgYellowBright(`This is not saved, to save it you need to run < push origin >`))
         await fsExtra.remove(downloadDir);
     } catch (err) {
         console.error("Error copying files:", err);
@@ -107,7 +108,7 @@ async function extractZip(zipFilePath: string, outputDir: string) {
     if(!parsedBranchesJsonData[parentBranch]){
       return console.log(clc.redBright(`Parent branch - ${parentBranch} does not exist`));
     }
-    // fs.writeFileSync(path.join(process.cwd(),"/.gitpulse","BRANCHES.json"), JSON.stringify(parsedBranchesJsonData, null, 2), "utf-8");
+    fs.writeFileSync(path.join(process.cwd(),"/.gitpulse","BRANCHES.json"), JSON.stringify(parsedBranchesJsonData, null, 2), "utf-8");
 
     const branchesHistorykeymap = fs.readFileSync(path.join(process.cwd(),"/.gitpulse","Branch_Key_Value.json"),"utf-8");
     
