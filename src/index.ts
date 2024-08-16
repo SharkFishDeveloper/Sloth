@@ -14,6 +14,7 @@ import { initOriginMethod } from "./functions/initOrigin";
 import { pushOriginOwner } from "./functions/pushOrigin";
 import { mergePullRequest } from "./functions/mergePr/mergepr";
 import { pullOriginRequest } from "./functions/pullOrigin/pullOrigin";
+import { generateMermaidCode } from "./functions/mermaidCode/mermaid";
 // import linereader from "line-reader"
 var configPath = path.join(process.cwd(), "/.gitpulse/config.json");
 
@@ -1742,6 +1743,10 @@ class Gitpulse {
   }
   }
 
+  async eagleView(){
+    generateMermaidCode(path.join(this.branchesHistorykeymap));
+  }
+
   async pushOrigin(branchName:string){
     try {
       let parentB  = fs.readFileSync(this.branchesHistorykeymap,"utf-8");
@@ -1966,6 +1971,14 @@ program
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse?.view();
   })
+
+  program
+  .command('eagle view')
+  .description('Shows all the branches diagramatically')
+  .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse?.eagleView();
+  });
 
 
   program

@@ -43,7 +43,7 @@ function pullOriginDownload(preUrl) {
                     .on('error', reject);
             });
             const yourRepoName = path_1.default.basename(path_1.default.join(process.cwd(), "../"));
-            console.log(`File successfully downloaded to: ${downloadfilePath}`);
+            // console.log(`File successfully downloaded to: ${downloadfilePath}`);
             yield extractZip(downloadfilePath, extractedZipDir);
             fs_1.default.readdir(downloadDir, (err, files) => __awaiter(this, void 0, void 0, function* () {
                 if (!files.includes(yourRepoName)) {
@@ -74,13 +74,13 @@ function pullOriginDownload(preUrl) {
 exports.pullOriginDownload = pullOriginDownload;
 function extractZip(zipFilePath, outputDir) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(`Extracting ${zipFilePath} to ${outputDir}`);
+        // console.log(`Extracting ${zipFilePath} to ${outputDir}`);
         yield fs_extra_1.default.mkdirp(outputDir);
         return new Promise((resolve, reject) => {
             fs_1.default.createReadStream(zipFilePath)
                 .pipe(unzipper_1.default.Extract({ path: outputDir, }))
                 .on('close', () => {
-                console.log(`Extraction complete to ${outputDir}`);
+                // console.log(`Extraction complete to ${outputDir}`);
                 resolve();
             })
                 .on('error', reject);
@@ -89,12 +89,47 @@ function extractZip(zipFilePath, outputDir) {
 }
 function copySlothFolderAndRemoveZip(yourRepoName, downloadDir) {
     return __awaiter(this, void 0, void 0, function* () {
-        // const destPath = path.join(process.cwd(),"../","abc");
         const destPath = path_1.default.join(process.cwd(), "/.gitpulse");
         const deletGitpulse = path_1.default.join(destPath, "/.gitpulse");
-        const pathname = path_1.default.join(downloadDir, yourRepoName);
-        yield fs_extra_1.default.emptyDir(deletGitpulse);
-        console.log(pathname, destPath);
-        fs_extra_1.default.copy(pathname, destPath, { overwrite: true });
+        const pathname = path_1.default.join(downloadDir, yourRepoName, "Sloth", ".gitpulse");
+        yield emptyDirExceptFile(destPath, "config.json");
+        // console.log(pathname,destPath)
+        yield fs_extra_1.default.copy(pathname, destPath, { overwrite: true });
+        yield fs_extra_1.default.remove(downloadDir);
+        return console.log(cli_color_1.default.greenBright(`You are upto date now -- :)`));
+    });
+}
+function emptyDirExceptFile(dirPath, fileToExclude) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // List all files and directories inside the directory
+            const items = yield fs_extra_1.default.readdir(dirPath);
+            for (const item of items) {
+                const itemPath = path_1.default.join(dirPath, item);
+                // console.log(itemPath,"EXLCUDE",fileToExclude)
+                // Check if the item is the file you want to exclude
+                if (item === fileToExclude) {
+                    // console.log(`Skipping file: ${itemPath}`);
+                    continue;
+                }
+                // Get the stats for the item
+                const stats = yield fs_extra_1.default.stat(itemPath);
+                // console.log(`file/directory: ${itemPath}`);
+                if (stats.isDirectory()) {
+                    // Recursively delete subdirectories
+                    yield fs_extra_1.default.remove(itemPath);
+                    // console.log(`Removed directory: ${itemPath}`);
+                }
+                else if (stats.isFile()) {
+                    // Remove files
+                    yield fs_extra_1.default.remove(itemPath);
+                    // console.log(`Removed file: ${itemPath}`);
+                }
+            }
+        }
+        catch (error) {
+            //@ts-ignore
+            console.error(`Error emptying directory: ${error.message}`);
+        }
     });
 }

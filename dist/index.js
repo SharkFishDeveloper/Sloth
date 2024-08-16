@@ -49,6 +49,7 @@ const initOrigin_1 = require("./functions/initOrigin");
 const pushOrigin_1 = require("./functions/pushOrigin");
 const mergepr_1 = require("./functions/mergePr/mergepr");
 const pullOrigin_1 = require("./functions/pullOrigin/pullOrigin");
+const mermaid_1 = require("./functions/mermaidCode/mermaid");
 // import linereader from "line-reader"
 var configPath = path_1.default.join(process.cwd(), "/.gitpulse/config.json");
 class Gitpulse {
@@ -1721,6 +1722,11 @@ class Gitpulse {
             }
         });
     }
+    eagleView() {
+        return __awaiter(this, void 0, void 0, function* () {
+            (0, mermaid_1.generateMermaidCode)(path_1.default.join(this.branchesHistorykeymap));
+        });
+    }
     pushOrigin(branchName) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -1934,6 +1940,13 @@ program.command('view ')
     .action((action) => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.view();
+});
+program
+    .command('eagle view')
+    .description('Shows all the branches diagramatically')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.eagleView();
 });
 program
     .command('create origin')

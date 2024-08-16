@@ -6,6 +6,7 @@ import clc from "cli-color";
 import unzipper from "unzipper"
 
 export async function pullOriginDownload(preUrl:string) {
+
     const downloadDir = path.join(process.cwd(), "../","pull-origin");
     const extractedZipDir = path.join(process.cwd(),"../","pull-origin");
 
@@ -35,8 +36,10 @@ export async function pullOriginDownload(preUrl:string) {
     });
     const yourRepoName = path.basename(path.join(process.cwd(),"../"));
 
-    console.log(`File successfully downloaded to: ${downloadfilePath}`);
+    // console.log(`File successfully downloaded to: ${downloadfilePath}`);
+
     await extractZip(downloadfilePath, extractedZipDir);
+    
     fs.readdir(downloadDir,async(err,files)=>{
       if(!files.includes(yourRepoName)){
         console.log(clc.yellowBright(`First download it, and then you can pull latest changes*`));
@@ -63,7 +66,7 @@ export async function pullOriginDownload(preUrl:string) {
 }
 
 async function extractZip(zipFilePath: string, outputDir: string) {
-    console.log(`Extracting ${zipFilePath} to ${outputDir}`);
+    // console.log(`Extracting ${zipFilePath} to ${outputDir}`);
 
     await fsExtra.mkdirp(outputDir);
   
@@ -71,7 +74,7 @@ async function extractZip(zipFilePath: string, outputDir: string) {
       fs.createReadStream(zipFilePath)
         .pipe(unzipper.Extract({ path: outputDir, }))
         .on('close', () => {
-          console.log(`Extraction complete to ${outputDir}`);
+          // console.log(`Extraction complete to ${outputDir}`);
           resolve();
         })
         .on('error', reject);
@@ -79,11 +82,48 @@ async function extractZip(zipFilePath: string, outputDir: string) {
   }
 
   async function copySlothFolderAndRemoveZip(yourRepoName:string , downloadDir:string) {
-    // const destPath = path.join(process.cwd(),"../","abc");
+    
     const destPath = path.join(process.cwd(),"/.gitpulse");
     const deletGitpulse = path.join(destPath,"/.gitpulse");
-    const pathname = path.join(downloadDir,yourRepoName)
-    await fsExtra.emptyDir(deletGitpulse);
-    console.log(pathname,destPath)
-    fsExtra.copy(pathname,destPath,{overwrite:true})
+    const pathname = path.join(downloadDir,yourRepoName,"Sloth",".gitpulse")
+    await emptyDirExceptFile(destPath,"config.json");
+    // console.log(pathname,destPath)
+    await fsExtra.copy(pathname,destPath,{overwrite:true})
+    await fsExtra.remove(downloadDir);
+    return console.log(clc.greenBright(`You are upto date now -- :)`));
   }
+
+  async function emptyDirExceptFile(dirPath:string, fileToExclude:string) {
+    try {
+        // List all files and directories inside the directory
+        const items = await fsExtra.readdir(dirPath);
+
+        for (const item of items) {
+            const itemPath = path.join(dirPath, item);
+            // console.log(itemPath,"EXLCUDE",fileToExclude)
+          
+            // Check if the item is the file you want to exclude
+            if (item === fileToExclude) {
+                // console.log(`Skipping file: ${itemPath}`);
+                continue;
+            }
+
+            // Get the stats for the item
+            const stats = await fsExtra.stat(itemPath);
+            // console.log(`file/directory: ${itemPath}`);
+            if (stats.isDirectory()) {
+                // Recursively delete subdirectories
+                await fsExtra.remove(itemPath);
+                // console.log(`Removed directory: ${itemPath}`);
+            } else if (stats.isFile()) {
+                // Remove files
+                await fsExtra.remove(itemPath);
+                // console.log(`Removed file: ${itemPath}`);
+            }
+        }
+
+    } catch (error) {
+      //@ts-ignore
+        console.error(`Error emptying directory: ${error.message}`);
+    }
+}
