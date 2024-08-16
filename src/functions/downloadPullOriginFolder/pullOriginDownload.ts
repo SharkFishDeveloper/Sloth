@@ -6,8 +6,8 @@ import clc from "cli-color";
 import unzipper from "unzipper"
 
 export async function pullOriginDownload(preUrl:string) {
-    const downloadDir = path.join(process.cwd(), "../");
-    const extractedZipDir = path.join(process.cwd(),"../", "../","Sloth");
+    const downloadDir = path.join(process.cwd(), "../","pull-origin");
+    const extractedZipDir = path.join(process.cwd(),"../","pull-origin");
 
     const filename = path.basename(new URL(preUrl).pathname); 
     const downloadfilePath = path.join(downloadDir,filename);
@@ -22,18 +22,26 @@ export async function pullOriginDownload(preUrl:string) {
       throw new Error(`Error downloading file: ${response.status}`);
     }
     
-    const writer = fs.createWriteStream(downloadfilePath);
+    // const writer = fs.createWriteStream(downloadfilePath);
     
 
-    await new Promise((resolve, reject) => {
-      response.data.pipe(writer)
-        .on('finish', () => resolve(downloadfilePath))
-        .on('error', reject);
-    });
+    // await new Promise((resolve, reject) => {
+    //   response.data.pipe(writer)
+    //     .on('finish', () => resolve(downloadfilePath))
+    //     .on('error', reject);
+    // });
+    const yourRepoName = path.basename(path.join(process.cwd(),"../"));
 
     console.log(`File successfully downloaded to: ${downloadfilePath}`);
     await extractZip(downloadfilePath, extractedZipDir);
-    
+    // fs.readdir(downloadDir,async(err,files)=>{
+    //   if(!files.includes(yourRepoName)){
+    //     console.log(clc.yellowBright(`First download it, and then you can pull latest changes*`));
+    //     await fsExtra.remove(downloadDir);
+    //   }
+    // })
+    await copySlothFolderAndRemoveZip(yourRepoName,downloadDir);
+
 
    } catch (error) {
     //@ts-ignore
@@ -53,17 +61,22 @@ export async function pullOriginDownload(preUrl:string) {
 
 async function extractZip(zipFilePath: string, outputDir: string) {
     console.log(`Extracting ${zipFilePath} to ${outputDir}`);
-    
-    // Create extraction directory if it doesn't exist
+
     await fsExtra.mkdirp(outputDir);
   
     return new Promise<void>((resolve, reject) => {
       fs.createReadStream(zipFilePath)
-        .pipe(unzipper.Extract({ path: outputDir }))
+        .pipe(unzipper.Extract({ path: outputDir, }))
         .on('close', () => {
           console.log(`Extraction complete to ${outputDir}`);
           resolve();
         })
         .on('error', reject);
     });
+  }
+
+  async function copySlothFolderAndRemoveZip(yourRepoName:string , downloadDir:string) {
+    const pathname = path.join(downloadDir,yourRepoName);
+    console.log(pathname,path.join(process.cwd(),"../"))
+    fsExtra.copy(pathname,path.join(process.cwd(),"../"))
   }

@@ -1818,10 +1818,10 @@ class Gitpulse {
   async mergePr(){
     await mergePullRequest();
   }
-
   async pullOrigin(){
     await pullOriginRequest();
   }
+
 
 }
 
@@ -2002,16 +2002,6 @@ program
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse?.mergePr();
   });
-
-  program
-  .command('pull origin')
-  .description('Fetches the latest repo')
-  .action(() => {
-    gitpulse = Gitpulse.loadFromConfig();
-    gitpulse?.pullOrigin();
-  });
-
-
 
 
 

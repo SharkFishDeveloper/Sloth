@@ -66,7 +66,7 @@ export async function Push(diff: string[], branchname: string, parentBranch: str
   const minifiedJson = JSON.stringify(parsedJson[branchname]);
   const miniJson  = await zipBranchChanges(minifiedJson);
 
-  // console.log(diff,"branchname",branchname,"parentBranch",parentBranch,"history",history);
+  console.log(diff,"branchname",branchname,"parentBranch",parentBranch,"history",history);
 
   
   await fsExtra.remove(prRequestfilePath);
@@ -120,7 +120,7 @@ export async function Push(diff: string[], branchname: string, parentBranch: str
   const reponame = await promptQuestion('Enter Repo name: ')
   const username = await promptQuestion('Enter your email: ');
   const password = await promptQuestion('Enter your password: ');
-  const message = await  promptQuestion('Enter pull request message: ');
+  const message = await promptQuestion('Enter pull request message: ');
 
   //@ts-ignore
   if(reponame.length<6 && username.length < 6 || password.length < 6){
@@ -140,12 +140,8 @@ export async function Push(diff: string[], branchname: string, parentBranch: str
     if(result.data.status){
       return console.log(clc.redBright(result.data.message))
     }
-    try {
-      await uploadPullRequest(result.data.message);
-      return console.log(clc.greenBright(`Created a pull request to ${reponame} successfully`))
-    } catch (error) {
-      console.log(clc.redBright(error))
-    }
+    await uploadPullRequest(result.data.message);
+    return console.log(clc.greenBright(`Created a pull request to ${reponame} successfully`))
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.log(clc.redBright(`Status: ${error.response?.status}`));

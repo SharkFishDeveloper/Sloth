@@ -79,7 +79,7 @@ function Push(diff, branchname, parentBranch, history) {
         }
         const minifiedJson = JSON.stringify(parsedJson[branchname]);
         const miniJson = yield zipBranchChanges(minifiedJson);
-        // console.log(diff,"branchname",branchname,"parentBranch",parentBranch,"history",history);
+        console.log(diff, "branchname", branchname, "parentBranch", parentBranch, "history", history);
         yield fs_extra_1.default.remove(prRequestfilePath);
         const filesArray = diff.map((file) => {
             return path_1.default.join(process.cwd(), ".gitpulse", "Branch_modifications", file);
@@ -143,13 +143,8 @@ function Push(diff, branchname, parentBranch, history) {
             if (result.data.status) {
                 return console.log(cli_color_1.default.redBright(result.data.message));
             }
-            try {
-                yield (0, uploadPr_1.uploadPullRequest)(result.data.message);
-                return console.log(cli_color_1.default.greenBright(`Created a pull request to ${reponame} successfully`));
-            }
-            catch (error) {
-                console.log(cli_color_1.default.redBright(error));
-            }
+            yield (0, uploadPr_1.uploadPullRequest)(result.data.message);
+            return console.log(cli_color_1.default.greenBright(`Created a pull request to ${reponame} successfully`));
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {

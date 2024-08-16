@@ -44,7 +44,7 @@ export const uploadPullRequest= async (preUrl: any) => {
   } catch (error) {
     await fsExtra.remove(filePath);
     //@ts-ignore
-    // console.log(clc.redBright("Error uploading file:", error.message));
+    console.log(clc.redBright("Error uploading file:", error.message));
     //@ts-ignore
     console.log(error.response?.data || error.message); // Additional error info
   }

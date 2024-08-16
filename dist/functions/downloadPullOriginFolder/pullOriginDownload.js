@@ -22,8 +22,8 @@ const unzipper_1 = __importDefault(require("unzipper"));
 function pullOriginDownload(preUrl) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
-        const downloadDir = path_1.default.join(process.cwd(), "../");
-        const extractedZipDir = path_1.default.join(process.cwd(), "../", "../", "Sloth");
+        const downloadDir = path_1.default.join(process.cwd(), "../", "pull-origin");
+        const extractedZipDir = path_1.default.join(process.cwd(), "../", "pull-origin");
         const filename = path_1.default.basename(new URL(preUrl).pathname);
         const downloadfilePath = path_1.default.join(downloadDir, filename);
         yield fs_extra_1.default.mkdirp(downloadDir);
@@ -33,14 +33,22 @@ function pullOriginDownload(preUrl) {
             if (response.status !== 200) {
                 throw new Error(`Error downloading file: ${response.status}`);
             }
-            const writer = fs_1.default.createWriteStream(downloadfilePath);
-            yield new Promise((resolve, reject) => {
-                response.data.pipe(writer)
-                    .on('finish', () => resolve(downloadfilePath))
-                    .on('error', reject);
-            });
+            // const writer = fs.createWriteStream(downloadfilePath);
+            // await new Promise((resolve, reject) => {
+            //   response.data.pipe(writer)
+            //     .on('finish', () => resolve(downloadfilePath))
+            //     .on('error', reject);
+            // });
+            const yourRepoName = path_1.default.basename(path_1.default.join(process.cwd(), "../"));
             console.log(`File successfully downloaded to: ${downloadfilePath}`);
             yield extractZip(downloadfilePath, extractedZipDir);
+            // fs.readdir(downloadDir,async(err,files)=>{
+            //   if(!files.includes(yourRepoName)){
+            //     console.log(clc.yellowBright(`First download it, and then you can pull latest changes*`));
+            //     await fsExtra.remove(downloadDir);
+            //   }
+            // })
+            yield copySlothFolderAndRemoveZip(yourRepoName, downloadDir);
         }
         catch (error) {
             //@ts-ignore
@@ -64,16 +72,22 @@ exports.pullOriginDownload = pullOriginDownload;
 function extractZip(zipFilePath, outputDir) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log(`Extracting ${zipFilePath} to ${outputDir}`);
-        // Create extraction directory if it doesn't exist
         yield fs_extra_1.default.mkdirp(outputDir);
         return new Promise((resolve, reject) => {
             fs_1.default.createReadStream(zipFilePath)
-                .pipe(unzipper_1.default.Extract({ path: outputDir }))
+                .pipe(unzipper_1.default.Extract({ path: outputDir, }))
                 .on('close', () => {
                 console.log(`Extraction complete to ${outputDir}`);
                 resolve();
             })
                 .on('error', reject);
         });
+    });
+}
+function copySlothFolderAndRemoveZip(yourRepoName, downloadDir) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pathname = path_1.default.join(downloadDir, yourRepoName);
+        console.log(pathname, path_1.default.join(process.cwd(), "../"));
+        fs_extra_1.default.copy(pathname, path_1.default.join(process.cwd(), "../"));
     });
 }

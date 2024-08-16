@@ -21,8 +21,12 @@ function pullOriginRequest() {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            // const yourRepoName = path.basename(path.join(process.cwd(),"../"));
             const reponame = yield (0, sendFile_1.promptQuestion)('Enter repo name: ');
             //@ts-ignore
+            // if(yourRepoName !== reponame){
+            //     return console.log(clc.yellowBright(`First download it, and then you can pull latest changes*`));
+            // }
             if (reponame.length < 6) {
                 return console.log(cli_color_1.default.redBright("Reponame is too short ..."));
             }

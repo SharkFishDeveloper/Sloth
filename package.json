@@ -13,7 +13,6 @@
     "@types/node": "^20.14.12"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.632.0",
     "@types/archiver": "^6.0.2",
     "@types/cli-color": "^2.0.6",
     "@types/commander": "^2.12.2",
@@ -22,7 +21,6 @@
     "@types/fs-extra": "^11.0.4",
     "@types/klaw": "^3.0.6",
     "@types/line-reader": "^0.0.37",
-    "@types/unzipper": "^0.10.10",
     "archiver": "^7.0.1",
     "aws-sdk": "^2.1673.0",
     "axios": "^1.7.3",

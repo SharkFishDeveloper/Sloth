@@ -2,11 +2,18 @@ import axios from "axios";
 import { promptQuestion } from "../sendFile";
 import clc from "cli-color";
 import { pullOriginDownload } from "../downloadPullOriginFolder/pullOriginDownload";
+import path from "path";
 
 export async function pullOriginRequest() {
     try {
+
+        // const yourRepoName = path.basename(path.join(process.cwd(),"../"));
+
         const reponame = await promptQuestion('Enter repo name: ');
         //@ts-ignore
+        // if(yourRepoName !== reponame){
+        //     return console.log(clc.yellowBright(`First download it, and then you can pull latest changes*`));
+        // }
         if(reponame.length < 6){
             return console.log(clc.redBright("Reponame is too short ..."));
         }
