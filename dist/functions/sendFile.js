@@ -22,6 +22,7 @@ const archiver_1 = __importDefault(require("archiver"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const zlib_1 = __importDefault(require("zlib"));
 const uploadPr_1 = require("./upload/uploadPr");
+const url_1 = require("./util/url");
 function promptQuestion(query) {
     const rl = readline_1.default.createInterface({
         input: process.stdin,
@@ -79,7 +80,7 @@ function Push(diff, branchname, parentBranch, history) {
         }
         const minifiedJson = JSON.stringify(parsedJson[branchname]);
         const miniJson = yield zipBranchChanges(minifiedJson);
-        console.log(diff, "branchname", branchname, "parentBranch", parentBranch, "history", history);
+        // console.log(diff,"branchname",branchname,"parentBranch",parentBranch,"history",history);
         yield fs_extra_1.default.remove(prRequestfilePath);
         const filesArray = diff.map((file) => {
             return path_1.default.join(process.cwd(), ".gitpulse", "Branch_modifications", file);
@@ -137,7 +138,7 @@ function Push(diff, branchname, parentBranch, history) {
             return console.log(cli_color_1.default.redBright(`PR message is too big !!`));
         }
         try {
-            const result = yield axios_1.default.post(`http://localhost:3000/push-origin`, {
+            const result = yield axios_1.default.post(`${url_1.BACKEND_URL}/push-origin`, {
                 email: username, password, repoName: reponame, totalCommits: history.length, childBranch: branchname, parentBranch, message
             });
             if (result.data.status) {

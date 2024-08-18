@@ -17,6 +17,7 @@ const axios_1 = __importDefault(require("axios"));
 const sendFile_1 = require("../sendFile");
 const cli_color_1 = __importDefault(require("cli-color"));
 const pullOriginDownload_1 = require("../downloadPullOriginFolder/pullOriginDownload");
+const url_1 = require("../util/url");
 function pullOriginRequest() {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
@@ -30,7 +31,7 @@ function pullOriginRequest() {
             if (reponame.length < 6) {
                 return console.log(cli_color_1.default.redBright("Reponame is too short ..."));
             }
-            const result = yield axios_1.default.post(`http://localhost:3000/pull`, { reponame });
+            const result = yield axios_1.default.post(`${url_1.BACKEND_URL}/pull`, { reponame });
             if (result.data.status) {
                 return console.log(cli_color_1.default.redBright(result.data.message));
             }

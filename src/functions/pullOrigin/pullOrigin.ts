@@ -24,6 +24,7 @@ export async function pullOriginRequest() {
         }
         else {
             await pullOriginDownload(result.data.message);
+            console.log(clc.magentaBright(`To show the latest changes, you need to switch branch/commit one time`))
         }
     } catch (error) {
         console.log(error);

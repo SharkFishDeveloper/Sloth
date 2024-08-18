@@ -20,6 +20,7 @@ const file_1 = require("./file");
 const path_1 = __importDefault(require("path"));
 const zipFiles_1 = require("./zipFiles");
 const uploadFile_1 = require("./uploadFile");
+const url_1 = require("./util/url");
 function initOriginMethod() {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
@@ -36,7 +37,7 @@ function initOriginMethod() {
             const reponame = yield (0, sendFile_1.promptQuestion)('Enter Repo name: ');
             const email = yield (0, sendFile_1.promptQuestion)('Enter your username: ');
             const password = yield (0, sendFile_1.promptQuestion)('Enter your password: ');
-            const result = yield axios_1.default.post(`http://localhost:3000/init`, { reponame, email, password });
+            const result = yield axios_1.default.post(`${url_1.BACKEND_URL}/init`, { reponame, email, password });
             const preUrl = result.data.message;
             const userId = result.data.id;
             if (result.data.status) {
