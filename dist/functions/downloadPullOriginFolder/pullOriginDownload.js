@@ -129,7 +129,7 @@ function emptyDirExceptFile(dirPath, fileToExclude) {
         }
         catch (error) {
             //@ts-ignore
-            console.error(`Error emptying directory: ${error.message}`);
+            // console.error(`Error emptying directory: ${error.message}`);
         }
     });
 }

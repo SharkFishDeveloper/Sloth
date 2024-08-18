@@ -20,6 +20,7 @@ const file_1 = require("./file");
 const path_1 = __importDefault(require("path"));
 const zipFiles_1 = require("./zipFiles");
 const uploadFile_1 = require("./uploadFile");
+const url_1 = require("./util/url");
 function pushOriginOwner() {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
@@ -27,7 +28,7 @@ function pushOriginOwner() {
             const reponame = yield (0, sendFile_1.promptQuestion)('Enter Repo name: ');
             const email = yield (0, sendFile_1.promptQuestion)('Enter your username: ');
             const password = yield (0, sendFile_1.promptQuestion)('Enter your password: ');
-            const result = yield axios_1.default.post(`http://localhost:3000/push`, { reponame, email, password });
+            const result = yield axios_1.default.post(`${url_1.BACKEND_URL}/push`, { reponame, email, password });
             if (!result.data.id) {
                 return console.log(cli_color_1.default.redBright(result.data.message));
             }

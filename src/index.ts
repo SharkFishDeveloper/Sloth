@@ -434,7 +434,7 @@ class Gitpulse {
             // console.log("File PATH TO ADD FOCUS ON THIS ->", path.join(diffpath1, diff.name1 as string));
             let initialName = path.join(diffpath1, diff.name1 as string)
             if (isFile(initialName)) {
-              console.log(`$/{path} is a file`);
+              // console.log(`$/{path} is a file`);
               const fileData = fs.readFileSync(initialName, "utf-8");
               if (fileData !== null) {
                 let a = path.join(this.cwd, diffpath1.split("staging")[1]);
@@ -503,7 +503,7 @@ class Gitpulse {
             }
             //! or use simple text copy,paste
             modifiedFiles?.push(path.join(a, diff.name1 as string));
-            console.log("Modified content", path.join(diff.path1 as string, diff.name1 as string));
+            // console.log("Modified content", path.join(diff.path1 as string, diff.name1 as string));
           }
 
           else if (diff.state === "right") {
@@ -877,12 +877,12 @@ class Gitpulse {
     }
     const migPath = srcDest;
     const dfiles = await this.extractTopLevelDirectories();
-    console.log("D", dfiles)
+    // console.log("D", dfiles)
     try {
       if (!srcDest.includes("cmpA")) {
         // console.log("REMOVING DIRECTORUES");
         dfiles.forEach(async (del) => {
-          console.log("==>",del);
+          // console.log("==>",del);
           await fsExtra.removeSync(del);
         })
       } else {
@@ -912,7 +912,7 @@ class Gitpulse {
       const lastid = id.substring(finalId + 1, finalId + 41);
       if (lastid === commitId) {
         Index = index;
-        console.log(`Commit ID ${lastid} found at line ${index + 1}`);
+        // console.log(`Commit ID ${lastid} found at line ${index + 1}`);
       }
       // console.log("ID", lastid)
       const idc = lastid
@@ -1150,7 +1150,7 @@ class Gitpulse {
         // console.log("C", currentHead, "COMMIDTD", commitId);
       }
       // console.log("result->", result);
-      console.log("MESSAGE MAIN COMMITS", commitMessage);
+      // console.log("MESSAGE MAIN COMMITS", commitMessage);
       if (parsedJSONdata === null) {
         fs.writeFileSync(this.branchesPath, JSON.stringify(result, null, 2), 'utf-8');
       } else {
@@ -1181,7 +1181,7 @@ class Gitpulse {
       // Write updated items back to the JSON file
       fs.writeFileSync(this.branchesHistorykeymap, JSON.stringify(writeData, null, 2), 'utf8');
 
-      return;
+      return console.log(clc.blueBright(`Switched fro main -> ${branchName}`));
     }
 
   }
@@ -1267,7 +1267,7 @@ class Gitpulse {
               });
               
             });
-            console.log("added files -> ", `\n${path.join(this.cwd, a, diff.name1 as string)}`)
+            // console.log("added files -> ", `\n${path.join(this.cwd, a, diff.name1 as string)}`)
               fs.appendFileSync(path.join(objpath, "ad.txt"), `\n${path.join(this.cwd, a, diff.name1 as string)}`);
               addedFiles.push(path.join(this.cwd, a, diff.name1 as string));
           }
@@ -1336,6 +1336,7 @@ class Gitpulse {
         fsExtra.emptydirSync(distPath)
         fs.writeFileSync(this.currentHead, newCommitId)
         await this.copyDirectory(srcPath, distPath)
+        return console.log(clc.greenBright(`-- Commited --`))
       } catch (error) {
         // console.log("->", error);
       }
@@ -1804,7 +1805,10 @@ class Gitpulse {
         return console.log(clc.redBright(`Something went wrong`));
       } 
 
-      if(diff.length > 0){
+      if(diff.length === 0){
+        return console.log(clc.redBright(`You have nothing to commit`))
+      }
+      else if(diff.length > 0){
         // console.log(diff,branchName,value_key,diff_commit_message);
         await Push(diff,branchName,value_key,diff_commit_message);
       }

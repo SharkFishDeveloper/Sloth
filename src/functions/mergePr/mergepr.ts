@@ -11,9 +11,9 @@ export async function mergePullRequest() {
         const email = await promptQuestion('Enter your email: ');
         const password = await promptQuestion('Enter your password: ');
         const result = await axios.post(`${BACKEND_URL}/merge`,{prid,email,password});
-        if(result.data.status){
+        if(result.data.status===400){
             return console.log(clc.redBright(result.data.message))
-        }else{
+        }else if(!result.data.status){
             await downloadPr(result.data.message,result.data.parentBranch,result.data.childBranch);
         }
     } catch (error) {

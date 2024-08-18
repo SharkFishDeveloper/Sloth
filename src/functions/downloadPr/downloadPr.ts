@@ -11,10 +11,10 @@ import { BranchInterface, BranchKeyValueItems } from "../../util";
 export async function downloadPr(preUrl:any,parentBranch:string,childBranch:string) {
     const downloadDir = path.join(process.cwd(), "../", "merge", "pr");
     const extractedZipDir = path.join(process.cwd(), "../", "merge", "pr","extracted");
-    await writeBranchChangesTxt(extractedZipDir,parentBranch,childBranch);
-    await copyAndPasteBranchesAndCommits(extractedZipDir);
     const filename = path.basename(new URL(preUrl).pathname); 
     const downloadfilePath = path.join(downloadDir, filename);
+
+   
     await fsExtra.mkdirp(downloadDir);
 
    try {
@@ -37,7 +37,8 @@ export async function downloadPr(preUrl:any,parentBranch:string,childBranch:stri
 
     // console.log(`File successfully downloaded to: ${downloadfilePath}`);
     await extractZip(downloadfilePath, extractedZipDir);
-    
+    await writeBranchChangesTxt(extractedZipDir,parentBranch,childBranch);
+    await copyAndPasteBranchesAndCommits(extractedZipDir);
 
    } catch (error) {
     //@ts-ignore
@@ -120,7 +121,7 @@ async function extractZip(zipFilePath: string, outputDir: string) {
     }
 
     if (!parsedBranchesJsonDataKeyMap[parentBranch]) {
-      parsedBranchesJsonDataKeyMap[childBranch] = [];
+      parsedBranchesJsonDataKeyMap[parentBranch] = [];
   }
   
   // Push new values into the array associated with the key

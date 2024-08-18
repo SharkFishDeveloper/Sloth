@@ -13,7 +13,7 @@ export async function pushOriginOwner() {
         const reponame = await promptQuestion('Enter Repo name: ')
         const email = await promptQuestion('Enter your username: ');
         const password = await promptQuestion('Enter your password: ');
-        const result = await axios.post(`${BACKEND_URL}push`,{reponame,email,password});
+        const result = await axios.post(`${BACKEND_URL}/push`,{reponame,email,password});
         if(!result.data.id){
             return console.log(clc.redBright(result.data.message))
         }

@@ -9,6 +9,7 @@ import fsExtra from "fs-extra"
 import { BranchInterface } from '../util';
 import zlib from 'zlib';
 import { uploadPullRequest } from './upload/uploadPr';
+import { BACKEND_URL } from './util/url';
 
 export function promptQuestion(query:string) {
   const rl = readline.createInterface({
@@ -66,7 +67,7 @@ export async function Push(diff: string[], branchname: string, parentBranch: str
   const minifiedJson = JSON.stringify(parsedJson[branchname]);
   const miniJson  = await zipBranchChanges(minifiedJson);
 
-  console.log(diff,"branchname",branchname,"parentBranch",parentBranch,"history",history);
+  // console.log(diff,"branchname",branchname,"parentBranch",parentBranch,"history",history);
 
   
   await fsExtra.remove(prRequestfilePath);
@@ -134,7 +135,7 @@ export async function Push(diff: string[], branchname: string, parentBranch: str
     return console.log(clc.redBright(`PR message is too big !!`));
   }
   try {
-    const result = await axios.post(`http://localhost:3000/push-origin`,{
+    const result = await axios.post(`${BACKEND_URL}/push-origin`,{
       email:username,password,repoName:reponame,totalCommits:history.length,childBranch:branchname,parentBranch,message
     })
     if(result.data.status){
