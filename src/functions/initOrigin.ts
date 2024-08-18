@@ -6,6 +6,7 @@ import path from "path";
 import { zipFiles } from "./zipFiles";
 import fs from "fs"
 import { uploadFile } from "./uploadFile";
+import { BACKEND_URL } from "./util/url";
 
 export async function initOriginMethod() {
     try {
@@ -21,7 +22,7 @@ export async function initOriginMethod() {
         const reponame = await promptQuestion('Enter Repo name: ')
         const email = await promptQuestion('Enter your username: ');
         const password = await promptQuestion('Enter your password: ');
-        const result = await axios.post(`http://localhost:3000/init`,{reponame,email,password});
+        const result = await axios.post(`${BACKEND_URL}/init`,{reponame,email,password});
         const preUrl = result.data.message;
         const userId = result.data.id;
         if(result.data.status){
