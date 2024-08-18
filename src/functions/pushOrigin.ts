@@ -6,13 +6,14 @@ import path from "path";
 import { zipFiles } from "./zipFiles";
 import fs from "fs"
 import { uploadFile } from "./uploadFile";
+import { BACKEND_URL } from "./util/url";
 
 export async function pushOriginOwner() {
     try {
         const reponame = await promptQuestion('Enter Repo name: ')
         const email = await promptQuestion('Enter your username: ');
         const password = await promptQuestion('Enter your password: ');
-        const result = await axios.post(`http://localhost:3000/push`,{reponame,email,password});
+        const result = await axios.post(`${BACKEND_URL}push`,{reponame,email,password});
         if(!result.data.id){
             return console.log(clc.redBright(result.data.message))
         }

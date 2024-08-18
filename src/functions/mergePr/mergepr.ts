@@ -2,6 +2,7 @@ import axios from "axios";
 import { promptQuestion } from "../sendFile";
 import clc = require("cli-color");
 import { downloadPr } from "../downloadPr/downloadPr";
+import { BACKEND_URL } from "../util/url";
 
 export async function mergePullRequest() {
     try {
@@ -9,7 +10,7 @@ export async function mergePullRequest() {
         // const reponame = await promptQuestion('Enter your repo name: ')
         const email = await promptQuestion('Enter your email: ');
         const password = await promptQuestion('Enter your password: ');
-        const result = await axios.post("/merge",{prid,email,password});
+        const result = await axios.post(`${BACKEND_URL}/merge`,{prid,email,password});
         if(result.data.status){
             return console.log(clc.redBright(result.data.message))
         }else{

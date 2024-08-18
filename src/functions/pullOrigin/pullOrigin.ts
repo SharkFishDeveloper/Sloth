@@ -3,6 +3,7 @@ import { promptQuestion } from "../sendFile";
 import clc from "cli-color";
 import { pullOriginDownload } from "../downloadPullOriginFolder/pullOriginDownload";
 import path from "path";
+import { BACKEND_URL } from "../util/url";
 
 export async function pullOriginRequest() {
     try {
@@ -17,7 +18,7 @@ export async function pullOriginRequest() {
         if(reponame.length < 6){
             return console.log(clc.redBright("Reponame is too short ..."));
         }
-        const result = await axios.post(`http://localhost:3000/pull`,{reponame});
+        const result = await axios.post(`${BACKEND_URL}/pull`,{reponame});
         if(result.data.status){
             return console.log(clc.redBright(result.data.message));
         }
