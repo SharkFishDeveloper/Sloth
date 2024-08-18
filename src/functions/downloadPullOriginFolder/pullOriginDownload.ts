@@ -124,6 +124,6 @@ async function extractZip(zipFilePath: string, outputDir: string) {
 
     } catch (error) {
       //@ts-ignore
-        console.error(`Error emptying directory: ${error.message}`);
+        // console.error(`Error emptying directory: ${error.message}`);
     }
 }

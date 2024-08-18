@@ -35,7 +35,7 @@ export async function downloadPr(preUrl:any,parentBranch:string,childBranch:stri
         .on('error', reject);
     });
 
-    console.log(`File successfully downloaded to: ${downloadfilePath}`);
+    // console.log(`File successfully downloaded to: ${downloadfilePath}`);
     await extractZip(downloadfilePath, extractedZipDir);
     
 
@@ -57,7 +57,7 @@ export async function downloadPr(preUrl:any,parentBranch:string,childBranch:stri
 
 
 async function extractZip(zipFilePath: string, outputDir: string) {
-    console.log(`Extracting ${zipFilePath} to ${outputDir}`);
+    // console.log(`Extracting ${zipFilePath} to ${outputDir}`);
     
     // Create extraction directory if it doesn't exist
     await fsExtra.mkdirp(outputDir);
@@ -66,7 +66,7 @@ async function extractZip(zipFilePath: string, outputDir: string) {
       fs.createReadStream(zipFilePath)
         .pipe(unzipper.Extract({ path: outputDir }))
         .on('close', () => {
-          console.log(`Extraction complete to ${outputDir}`);
+          // console.log(`Extraction complete to ${outputDir}`);
           resolve();
         })
         .on('error', reject);
@@ -85,13 +85,13 @@ async function extractZip(zipFilePath: string, outputDir: string) {
         console.log(clc.bgYellowBright(`This is not saved, to save it you need to run < push origin >`))
         await fsExtra.remove(downloadDir);
     } catch (err) {
-        console.error("Error copying files:", err);
+        // console.error("Error copying files:", err);
     }
   }
 
   async function writeBranchChangesTxt(writeBranchChangesTxt:string,parentBranch:string,childBranch:string) {
    try {
-    console.log("PAR",parentBranch,"CHILD",childBranch);
+    // console.log("PAR",parentBranch,"CHILD",childBranch);
     const branchZippedData = fs.readFileSync(path.join(writeBranchChangesTxt,"branchChanges.txt"),"utf-8")
     const buffer = Buffer.from(branchZippedData, 'base64'); 
     const decompressed = zlib.gunzipSync(buffer);

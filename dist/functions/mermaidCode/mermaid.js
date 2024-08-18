@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateMermaidCode = void 0;
 const cli_color_1 = __importDefault(require("cli-color"));
 const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 // Helper function to generate a random hex color
 function getRandomColor() {
     const letters = '0123456789ABCDEF';
@@ -17,6 +18,7 @@ function getRandomColor() {
 }
 function generateMermaidCode(branchPath) {
     const branchcommitsHistoryKeyMap = fs_1.default.readFileSync(branchPath, "utf-8");
+    const currentBranchName = fs_1.default.readFileSync(path_1.default.join(process.cwd(), ".gitpulse", "CURRENTBRANCH.txt"), "utf-8");
     if (!branchcommitsHistoryKeyMap) {
         console.log(cli_color_1.default.yellowBright(`There are no branches !!`));
         return; // Exit early if no branches

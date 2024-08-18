@@ -1,6 +1,7 @@
 import clc from "cli-color";
 import { BranchKeyValueItems } from "../../util";
 import fs from "fs";
+import path from "path";
 
 // Helper function to generate a random hex color
 function getRandomColor(): string {
@@ -14,6 +15,7 @@ function getRandomColor(): string {
 
 export function generateMermaidCode(branchPath: string): void {
     const branchcommitsHistoryKeyMap: string | null = fs.readFileSync(branchPath, "utf-8");
+    const currentBranchName: string = fs.readFileSync(path.join(process.cwd(),".gitpulse","CURRENTBRANCH.txt"), "utf-8");
     if (!branchcommitsHistoryKeyMap) {
         console.log(clc.yellowBright(`There are no branches !!`));
         return; // Exit early if no branches

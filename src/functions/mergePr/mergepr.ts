@@ -1,6 +1,7 @@
 import axios from "axios";
 import { promptQuestion } from "../sendFile";
 import clc = require("cli-color");
+import { downloadPr } from "../downloadPr/downloadPr";
 
 export async function mergePullRequest() {
     try {
@@ -11,6 +12,8 @@ export async function mergePullRequest() {
         const result = await axios.post("/merge",{prid,email,password});
         if(result.data.status){
             return console.log(clc.redBright(result.data.message))
+        }else{
+            await downloadPr(result.data.message,result.data.parentBranch,result.data.childBranch);
         }
     } catch (error) {
         if (axios.isAxiosError(error)) {
