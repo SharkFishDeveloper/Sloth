@@ -8,5 +8,5 @@ export interface BranchInterface {
 }
 
 export interface BranchKeyValueItems {
-    [key: string]: string;
+    [key: string]: string[];
 }

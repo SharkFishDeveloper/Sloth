@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -46,6 +45,11 @@ const fs_extra_1 = __importDefault(require("fs-extra"));
 const klaw_1 = __importDefault(require("klaw"));
 const zlib_1 = __importDefault(require("zlib"));
 const sendFile_1 = require("./functions/sendFile");
+const initOrigin_1 = require("./functions/initOrigin");
+const pushOrigin_1 = require("./functions/pushOrigin");
+const mergepr_1 = require("./functions/mergePr/mergepr");
+const pullOrigin_1 = require("./functions/pullOrigin/pullOrigin");
+const mermaid_1 = require("./functions/mermaidCode/mermaid");
 // import linereader from "line-reader"
 var configPath = path_1.default.join(process.cwd(), "/.gitpulse/config.json");
 class Gitpulse {
@@ -529,9 +533,9 @@ class Gitpulse {
                             // console.log("Deleted files",path.join(diff.path2 as string,diff.name2 as string)); 
                         }
                     });
-                    console.log("M", modifiedFiles);
-                    console.log("A", addedFiles);
-                    console.log("D", deletedFiles);
+                    // console.log("M", modifiedFiles);
+                    // console.log("A", addedFiles);
+                    // console.log("D", deletedFiles);
                 }
                 catch (error) {
                     console.error("Error comparing directories:", error);
@@ -561,36 +565,29 @@ class Gitpulse {
                     const deleteFilePath = path_1.default.join(this.objPath, id, "rm.txt");
                     let deletedFiles = fs_1.default.readFileSync(deleteFilePath, "utf-8");
                     addedFilesArray.forEach((file) => {
-                        const fileName = file.substring(this.cwd.length);
+                        const index = file.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                        let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                        const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                        // console.log("IMPORTANT => ",addedFile,path.basename(process.cwd(),"../"));
+                        basename = path_1.default.join(process.cwd(), "../", a);
+                        console.log("FILENAME TO ADD IN COMMIT MAIN -> ", a);
+                        // const fileName = file.substring(this.cwd.length);
                         const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
                         try {
-                            if (!fileExtensionRegex.test(fileName)) {
-                                fs_1.default.mkdirSync(path_1.default.join(this.gitpath, "diff", fileName));
+                            if (!fileExtensionRegex.test(basename)) {
+                                fs_1.default.mkdirSync(path_1.default.join(this.gitpath, "diff", a));
                             }
                             else {
-                                fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", fileName), "");
+                                fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", a), "");
                             }
                         }
                         catch (error) {
                         }
                     });
-                    const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
-                    deletedFilesArray.forEach((file) => {
-                        const fileName = file.substring(this.cwd.length);
-                        const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-                        if (!fileExtensionRegex.test(fileName)) {
-                            console.log("DEL dir", fileName);
-                            fs_1.default.promises.rm(path_1.default.join(this.gitpath, "diff", fileName), { recursive: true, force: true });
-                        }
-                        else {
-                            console.log("DEL file", fileName);
-                            fs_1.default.unlinkSync(path_1.default.join(this.gitpath, "diff", fileName));
-                        }
-                    });
                     var filesCount;
                     const mdfPath = path_1.default.join(this.objPath, id, "mdf");
                     fs_1.default.readdir(mdfPath, (err, files) => {
-                        if (files.length === 0) {
+                        if (!files || files.length === 0) {
                             filesCount = 0;
                             //&& addedFilesArray.length===0 && deletedFilesArray.length===0
                             return;
@@ -607,9 +604,32 @@ class Gitpulse {
                             }
                             const firstLine = content.substring(0, newlineIndex);
                             const remainingContent = content.substring(newlineIndex + 1);
-                            const filePath = firstLine.substring(this.cwd.length);
-                            fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", filePath), remainingContent);
+                            // const filePath = firstLine.substring(this.cwd.length);
+                            const index = firstLine.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                            let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                            const a = firstLine.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                            // basename = path.join(process.cwd(),"../",a)
+                            console.log("FILENAME TO MODIFY IN COMMIT MAIN -> ", a, basename, index);
+                            fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", a), remainingContent);
                         });
+                    });
+                    const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
+                    deletedFilesArray.forEach((file) => {
+                        const index = file.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                        let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                        const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                        // console.log("IMPORTANT => ",addedFile,path.basename(process.cwd(),"../"));
+                        basename = path_1.default.join(process.cwd(), "../", a);
+                        console.log("FILENAME TO DELETE IN COMMIT MAIN -> ", basename);
+                        const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+                        if (!fileExtensionRegex.test(basename)) {
+                            console.log("DEL dir", basename);
+                            fs_1.default.promises.rm(path_1.default.join(this.gitpath, "diff", a), { recursive: true, force: true });
+                        }
+                        else {
+                            console.log("DEL file", basename);
+                            fs_1.default.unlinkSync(path_1.default.join(this.gitpath, "diff", a));
+                        }
                     });
                     if (filesCount === 0 && addedFilesArray.length === 0 && deletedFilesArray.length === 0) {
                         return console.log(cli_color_1.default.greenBright("Nothing to commit,working tree clean"));
@@ -771,12 +791,15 @@ class Gitpulse {
         else if (branch === "main") {
             let currentHead = fs_1.default.readFileSync(this.currentHead, "utf-8").trim();
             let data = fs_1.default.readFileSync(this.commitsPath, "utf-8");
-            let show = data.split("\n").filter(line => line !== "").reverse();
+            let show = data.split("\n").filter(line => line !== "" && line !== "\r").reverse();
             console.log(cli_color_1.default.bgWhite(cli_color_1.default.black(`Commit logs for ${cli_color_1.default.red("Tree")}/${cli_color_1.default.green(`${branch}`)}`)));
             show.forEach((data) => {
+                var _a, _b;
                 const m = data.split(":");
-                const gmtIndex = m[4].indexOf("GMT");
-                const time = m[2] + ":" + m[3] + ":" + m[4].substring(0, gmtIndex);
+                if (m === undefined)
+                    return;
+                const gmtIndex = (_a = m[4]) === null || _a === void 0 ? void 0 : _a.indexOf("GMT+");
+                const time = m[2] + ":" + m[3] + ":" + ((_b = m[4]) === null || _b === void 0 ? void 0 : _b.substring(0, gmtIndex));
                 console.log(`${cli_color_1.default.yellow("message ->")} ${m[0]}\t` +
                     `${cli_color_1.default.whiteBright("ID ->")} ${m[1]} ` +
                     `${m[1] === currentHead ? cli_color_1.default.green("<- CURRENT-HEAD") : ''}\n` +
@@ -854,16 +877,16 @@ class Gitpulse {
                 if (!srcDest.includes("cmpA")) {
                     console.log("REMOVING DIRECTORUES");
                     dfiles.forEach((del) => __awaiter(this, void 0, void 0, function* () {
-                        fs_extra_1.default.removeSync(del);
+                        console.log("==>", del);
+                        yield fs_extra_1.default.removeSync(del);
                     }));
                 }
                 else {
                     console.log("Emptying cmpA");
                     fs_extra_1.default.mkdirSync(srcDest);
                 }
+                console.log("MIGPATH", path_1.default.join(this.objPath, "init"), "->", migPath);
                 yield this.copyDirectory(path_1.default.join(this.objPath, "init"), migPath);
-                console.log(path_1.default.join(this.objPath, "init"), migPath);
-                // return;
             }
             catch (error) {
                 console.log("ERROR", error);
@@ -874,15 +897,9 @@ class Gitpulse {
             }
             const commitDataPath = fs_1.default.readFileSync(this.commitsPath, "utf-8");
             const lines = commitDataPath.split('\n').filter(line => line !== '');
-            //  if(!srcDest.includes("cmpA")){
             lines.shift();
-            // if(srcDest.includes("cmpA")){
-            //   lines.pop();
-            // }
-            //  }
             var Index = 5000000;
             for (const [index, id] of lines.entries()) {
-                console.log("APPLYING CHANGES OF ->", id);
                 if (index > Index) {
                     fs_1.default.writeFileSync(this.currentHead, commitId);
                     break;
@@ -899,24 +916,35 @@ class Gitpulse {
                 console.log("ADDED FILE PATH", addFilePath);
                 let addedFiles = fs_1.default.readFileSync(addFilePath, "utf-8");
                 const addedFilesArray = addedFiles.split("\n").filter(line => line !== '');
-                addedFilesArray.forEach((file) => {
-                    const fileName = file.substring(this.cwd.length);
+                addedFilesArray.forEach((file) => __awaiter(this, void 0, void 0, function* () {
+                    const index = file.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                    let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                    const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                    if (!srcDest.includes("cmpA")) {
+                        basename = path_1.default.join(process.cwd(), "../", a);
+                    }
+                    else if (srcDest.includes("cmpA")) {
+                        basename = path_1.default.join(this.gitpath, "cmpA", a);
+                    }
                     const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-                    console.log("File to add ->", path_1.default.join(migPath, fileName));
+                    // console.log("File to add ->", basename);
                     try {
-                        if (!fileExtensionRegex.test(fileName)) {
-                            fs_1.default.mkdirSync(path_1.default.join(migPath, fileName));
+                        if (!fileExtensionRegex.test(basename)) {
+                            console.log("DIRECTORY->", basename);
+                            yield fs_extra_1.default.mkdir(basename);
                         }
                         else {
-                            fs_1.default.writeFileSync(path_1.default.join(migPath, fileName), "");
+                            console.log("FILENAME->", basename);
+                            yield fs_1.default.writeFileSync(basename, "");
                         }
                     }
                     catch (error) {
                     }
-                });
+                }));
+                // return;
                 const mdfPath = path_1.default.join(this.objPath, idc, "mdf");
                 fs_1.default.readdir(mdfPath, (err, files) => {
-                    if (files.length === 0) {
+                    if (!files || files.length === 0) {
                         return;
                     }
                     files.forEach((file) => {
@@ -932,18 +960,28 @@ class Gitpulse {
                         if (srcDest.includes("cmpA")) {
                             const firstLine = content.substring(0, newlineIndex);
                             const remainingContent = content.substring(newlineIndex + 1);
-                            let filePath = firstLine.substring(this.cwd.length);
-                            // filePath = filePath.substring(this.cwd.length)
-                            filePath = path_1.default.join(this.gitpath, "cmpA", filePath);
-                            console.log("FILEPATH->", filePath, "firstLine", filePath);
-                            fs_1.default.writeFileSync(filePath, remainingContent);
+                            // const filePath = firstLine.substring(this.cwd.length);
+                            const index = firstLine.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                            let basename = path_1.default.join(process.cwd(), path_1.default.basename(firstLine));
+                            const a = firstLine.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                            basename = path_1.default.join(this.gitpath, "cmpA", a);
+                            // const firstLine = content.substring(0, newlineIndex);
+                            // const remainingContent = content.substring(newlineIndex + 1);
+                            // let filePath = firstLine.substring(this.cwd.length);
+                            // filePath = path.join(this.gitpath, "cmpA", filePath);
+                            console.log("FILEPATH->", basename);
+                            fs_1.default.writeFileSync(basename, remainingContent);
                         }
                         else {
                             const firstLine = content.substring(0, newlineIndex);
                             const remainingContent = content.substring(newlineIndex + 1);
                             const filePath = firstLine.substring(this.cwd.length);
-                            console.log(content, "firstLine", firstLine, "filePath", filePath);
-                            fs_1.default.writeFileSync(firstLine, remainingContent);
+                            const index = firstLine.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                            let basename = path_1.default.join(process.cwd(), path_1.default.basename(firstLine));
+                            const a = firstLine.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                            basename = path_1.default.join(process.cwd(), "../", a);
+                            console.log(content, "firstLine", firstLine, "filePath", a);
+                            fs_1.default.writeFileSync(basename, remainingContent);
                         }
                     });
                 });
@@ -951,17 +989,20 @@ class Gitpulse {
                 let deletedFiles = fs_1.default.readFileSync(deleteFilePath, "utf-8");
                 const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
                 deletedFilesArray.forEach((file) => {
-                    console.log("ATTENTION HERE _ >>>>", file);
-                    const fileName = file.substring(this.cwd.length);
+                    const index = file.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                    let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                    const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                    basename = path_1.default.join(process.cwd(), "../", a);
+                    console.log("ATTENTION HERE _ >>>>", basename);
+                    // const fileName = file.substring(this.cwd.length);
                     const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-                    if (!fileExtensionRegex.test(fileName)) {
-                        console.log("DEL dir", fileName);
-                        fs_extra_1.default.remove(path_1.default.join(migPath, fileName));
-                        // fs.promises.rm(path.join(migPath,fileName),{recursive:true,force:true})
+                    if (!fileExtensionRegex.test(basename)) {
+                        console.log("DEL dir", basename);
+                        fs_extra_1.default.remove(basename);
                     }
                     else {
-                        console.log("DEL file", fileName);
-                        fs_extra_1.default.remove(path_1.default.join(migPath, fileName));
+                        console.log("DEL file", basename);
+                        fs_extra_1.default.remove(basename);
                     }
                 });
             }
@@ -1113,8 +1154,15 @@ class Gitpulse {
                 // Read current items from the JSON file
                 const data = fs_1.default.readFileSync(this.branchesHistorykeymap, 'utf8');
                 const items = data ? JSON.parse(data) : {};
-                // Update items with the new branch name
-                const writeData = Object.assign(Object.assign({}, items), { [currentBranchName]: branchName });
+                const writeData = Object.assign({}, items);
+                // Ensure the current branch key exists and is an array
+                if (!writeData[currentBranchName]) {
+                    writeData[currentBranchName] = [branchName];
+                }
+                // Add the new branch name to the array for the current branch key
+                if (!writeData[currentBranchName].includes(branchName)) {
+                    writeData[currentBranchName].push(branchName);
+                }
                 // Write updated items back to the JSON file
                 fs_1.default.writeFileSync(this.branchesHistorykeymap, JSON.stringify(writeData, null, 2), 'utf8');
                 return;
@@ -1132,7 +1180,15 @@ class Gitpulse {
             const data = fs_1.default.readFileSync(this.branchesHistorykeymap, 'utf8');
             const items = data ? JSON.parse(data) : {};
             // Update items with the new branch name
-            const writeData = Object.assign(Object.assign({}, items), { [currentBranchName]: branchName });
+            const writeData = Object.assign({}, items);
+            // Ensure the current branch key exists and is an array
+            if (!writeData[currentBranchName]) {
+                writeData[currentBranchName] = [branchName];
+            }
+            // Add the new branch name to the array for the current branch key
+            if (!writeData[currentBranchName].includes(branchName)) {
+                writeData[currentBranchName].push(branchName);
+            }
             // Write updated items back to the JSON file
             fs_1.default.writeFileSync(this.branchesHistorykeymap, JSON.stringify(writeData, null, 2), 'utf8');
             console.log(cli_color_1.default.cyanBright(`Switched from ${currentBranchName} -> ${branchName}`));
@@ -1281,7 +1337,7 @@ class Gitpulse {
                 if (lastMainId === "") {
                     return console.log(cli_color_1.default.red("There are no commits in main branch"));
                 }
-                // console.log("lastMainId",lastMainId);
+                console.log("lastMainId", lastMainId);
                 const a = path_1.default.join(process.cwd(), "../");
                 yield this.migrateToCommitInMain(lastMainId, a, "b");
                 yield (this === null || this === void 0 ? void 0 : this.add("."));
@@ -1311,9 +1367,8 @@ class Gitpulse {
                     return console.log(cli_color_1.default.redBright("Some issue is there"));
                 }
                 const a = path_1.default.join(process.cwd(), "../");
-                console.log("//////////////////////////////////////////////");
                 yield this.migrateToCommitInMain(migrateCommitIdMain, a, "b");
-                console.log(`migrateCommitIdMain: ${migrateCommitIdMain}`);
+                // console.log(`migrateCommitIdMain: ${migrateCommitIdMain}`);
                 var bool = false;
                 var lastCommitId = "";
                 for (const commitId in commits) {
@@ -1326,8 +1381,9 @@ class Gitpulse {
                         }
                         else if (bool === true) {
                             lastCommitId = commitId;
-                            yield this.gotoWorkingAndStaging(commitId);
+                            // console.log("lastMainId",lastCommitId);
                             console.log(cli_color_1.default.cyanBright("IDS->", commitId));
+                            yield this.gotoWorkingAndStaging(commitId);
                         }
                     }
                 }
@@ -1335,11 +1391,11 @@ class Gitpulse {
                 yield fs_extra_1.default.remove(path_1.default.join(this.gitpath, "cmpA"));
                 // await fsExtra.mkdirSync(path.join(this.gitpath,"cmpA"));
                 // fsExtra.mkdirSync(path.join(this.gitpath,"cmpA"));
-                console.log("->", path_1.default.join(this.gitpath, "cmpA"));
+                // console.log("->", path.join(this.gitpath, "cmpA"));
                 yield fs_extra_1.default.mkdir(path_1.default.join(this.gitpath, "cmpA"));
                 yield this.copyStagingCmpa();
-                fs_1.default.writeFileSync(this.currentHead, lastCommitId);
-                fs_1.default.writeFileSync(this.currentBranchName, branchName);
+                yield fs_1.default.writeFileSync(this.currentHead, lastCommitId);
+                yield fs_1.default.writeFileSync(this.currentBranchName, branchName);
                 console.log("End");
             }
         });
@@ -1359,27 +1415,41 @@ class Gitpulse {
         return __awaiter(this, void 0, void 0, function* () {
             const branchPathObject = path_1.default.join(this.branchingObjectsPath, commitId);
             const addedFiles = fs_1.default.readFileSync(path_1.default.join(branchPathObject, "ad.txt"), "utf-8");
-            console.log("####################");
+            // console.log("####################");
             const addedFilesArray = addedFiles.split("\n").filter(line => line !== "");
-            // console.log("ADDED FIELS->",addedFilesArray);
-            addedFilesArray.forEach((addedFile) => {
+            console.log("ADDED FILES->", addedFilesArray);
+            addedFilesArray.forEach((addedFile) => __awaiter(this, void 0, void 0, function* () {
+                const index = addedFile.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                let basename = path_1.default.join(process.cwd(), path_1.default.basename(addedFile));
+                const a = addedFile.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                // console.log("IMPORTANT => ",addedFile,path.basename(process.cwd(),"../"));
+                basename = path_1.default.join(process.cwd(), "../", a);
+                // return;
                 const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-                if (!fileExtensionRegex.test(addedFile)) {
-                    if (!fs_1.default.existsSync(addedFile)) {
-                        console.log('File does not exist. Creating new file.');
-                        fs_1.default.mkdirSync(addedFile);
+                if (!fileExtensionRegex.test(basename)) {
+                    if (!fs_1.default.existsSync(basename)) {
+                        console.log('Folder does not exist. Creating new file.', "Directory", basename);
+                        yield fs_extra_1.default.mkdirSync(basename);
                     }
                     else {
-                        console.log('File already exists.');
+                        console.log('Folder already exists.');
                     }
                 }
                 else {
-                    fs_1.default.writeFileSync(addedFile, "");
+                    console.log('File doesnot exists.', basename);
+                    fs_extra_1.default.writeFileSync(basename, "");
                 }
-            });
+            }));
             const modifiedFilesFiles = fs_1.default.readdir(path_1.default.join(branchPathObject, "mdf"), (err, files) => __awaiter(this, void 0, void 0, function* () {
+                if (!files) {
+                    return;
+                }
                 const filesArray = files;
                 filesArray.forEach((file) => {
+                    const index = file.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                    let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                    const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                    basename = path_1.default.join(process.cwd(), "../", a);
                     const fileCompressed = path_1.default.join(path_1.default.join(branchPathObject, "mdf", file));
                     const compressedData = fs_1.default.readFileSync(fileCompressed, { encoding: null });
                     const decompressedData = zlib_1.default.gunzipSync(compressedData);
@@ -1390,24 +1460,23 @@ class Gitpulse {
                     }
                     const firstLine = content.substring(0, newlineIndex);
                     const remainingContent = content.substring(newlineIndex + 1);
-                    console.log("DECDATA", path_1.default.join(this.cwd, firstLine), "R", remainingContent);
                     fs_1.default.writeFileSync(path_1.default.join(this.cwd, firstLine), remainingContent);
                 });
             }));
             const deletedFiles = fs_1.default.readFileSync(path_1.default.join(branchPathObject, "rm.txt"), "utf-8");
             const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== "");
-            console.log("DELETED FIELS->", deletedFilesArray);
-            console.log("BEGIN---------------");
             deletedFilesArray.forEach((delFile) => __awaiter(this, void 0, void 0, function* () {
-                console.log("START---------------");
-                console.log("DEF---------------", delFile);
+                const index = delFile.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                let basename = path_1.default.join(process.cwd(), path_1.default.basename(delFile));
+                const a = delFile.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                basename = path_1.default.join(process.cwd(), "../", a);
                 try {
-                    console.log("START DELETING---------------", delFile);
-                    yield fs_extra_1.default.removeSync(delFile);
-                    console.log(`Successfully deleted: ${delFile}`);
+                    // console.log("START DELETING---------------",basename);
+                    yield fs_extra_1.default.remove(basename);
+                    console.log(`Successfully deleted: ${basename}`);
                 }
                 catch (error) {
-                    console.error(`Error deleting ${delFile}:`, error);
+                    console.error(`Error deleting ${basename}:`, error);
                 }
             }));
             console.log(cli_color_1.default.redBright(`Now next`));
@@ -1513,9 +1582,10 @@ class Gitpulse {
             }
             try {
                 yield this.mergeAndCommit(message);
+                return console.log(cli_color_1.default.greenBright(`Branch - ${currentBranchName} is merged with MAIN`));
             }
             catch (error) {
-                return console.log(cli_color_1.default.greenBright(`Branch - ${currentBranchName} is merged with MAIN`));
+                console.log(error);
             }
         });
     }
@@ -1534,42 +1604,36 @@ class Gitpulse {
                 const startI = id.indexOf(":") + 1;
                 const endI = 40 + id.indexOf(":") + 1;
                 id = id.substring(startI, endI);
+                console.log("ID-<>", id);
                 const addFilePath = path_1.default.join(this.objPath, id, "ad.txt");
                 let addedFiles = fs_1.default.readFileSync(addFilePath, "utf-8");
                 const addedFilesArray = addedFiles.split("\n").filter(line => line !== '');
                 const deleteFilePath = path_1.default.join(this.objPath, id, "rm.txt");
                 let deletedFiles = fs_1.default.readFileSync(deleteFilePath, "utf-8");
                 addedFilesArray.forEach((file) => {
-                    const fileName = file.substring(this.cwd.length);
+                    const index = file.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                    let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                    const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                    basename = path_1.default.join(process.cwd(), "../", a);
+                    // const fileName = file.substring(this.cwd.length);
                     const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+                    console.log("ADD->", path_1.default.join(this.gitpath, "diff", a));
                     try {
-                        if (!fileExtensionRegex.test(fileName)) {
-                            fs_1.default.mkdirSync(path_1.default.join(this.gitpath, "diff", fileName));
+                        if (!fileExtensionRegex.test(basename)) {
+                            fs_1.default.mkdirSync(path_1.default.join(this.gitpath, "diff", a));
                         }
                         else {
-                            fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", fileName), "");
+                            fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", a), "");
                         }
                     }
                     catch (error) {
-                    }
-                });
-                const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
-                deletedFilesArray.forEach((file) => {
-                    const fileName = file.substring(this.cwd.length);
-                    const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
-                    if (!fileExtensionRegex.test(fileName)) {
-                        console.log("DEL dir", fileName);
-                        fs_1.default.promises.rm(path_1.default.join(this.gitpath, "diff", fileName), { recursive: true, force: true });
-                    }
-                    else {
-                        console.log("DEL file", fileName);
-                        fs_1.default.unlinkSync(path_1.default.join(this.gitpath, "diff", fileName));
+                        console.log(error);
                     }
                 });
                 var filesCount;
                 const mdfPath = path_1.default.join(this.objPath, id, "mdf");
                 fs_1.default.readdir(mdfPath, (err, files) => {
-                    if (files.length === 0) {
+                    if (!files || files.length === 0) {
                         filesCount = 0;
                         //&& addedFilesArray.length===0 && deletedFilesArray.length===0
                         return;
@@ -1584,10 +1648,38 @@ class Gitpulse {
                         }
                         const firstLine = content.substring(0, newlineIndex);
                         const remainingContent = content.substring(newlineIndex + 1);
+                        const index = firstLine.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                        let basename = path_1.default.join(process.cwd(), path_1.default.basename(firstLine));
+                        const a = firstLine.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                        basename = path_1.default.join(this.gitpath, "diff", a);
+                        console.log("MODI-<>", basename);
                         const filePath = firstLine.substring(this.cwd.length);
-                        fs_1.default.writeFileSync(path_1.default.join(this.gitpath, "diff", filePath), remainingContent);
+                        try {
+                            fs_1.default.writeFileSync(basename, remainingContent);
+                        }
+                        catch (error) {
+                            console.log("EROR modi", error);
+                        }
                     });
                 });
+                const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== '');
+                deletedFilesArray.forEach((file) => __awaiter(this, void 0, void 0, function* () {
+                    const index = file.indexOf(path_1.default.basename(path_1.default.join(process.cwd(), "../")));
+                    let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
+                    const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
+                    basename = path_1.default.join(process.cwd(), "../", a);
+                    console.log("DEL FILES->", path_1.default.join(this.gitpath, "diff", a));
+                    // const fileName = file.substring(this.cwd.length);
+                    const fileExtensionRegex = /\.[a-zA-Z0-9]+$/;
+                    if (!fileExtensionRegex.test(basename)) {
+                        console.log("DEL dir", basename);
+                        yield fs_extra_1.default.remove(path_1.default.join(this.gitpath, "diff", a));
+                    }
+                    else {
+                        console.log("DEL files", path_1.default.join(this.gitpath, "diff", a));
+                        yield fs_extra_1.default.remove(path_1.default.join(this.gitpath, "diff", a));
+                    }
+                }));
                 if (filesCount === 0 && addedFilesArray.length === 0 && deletedFilesArray.length === 0) {
                     return console.log(cli_color_1.default.greenBright("Nothing to commit,working tree clean"));
                 }
@@ -1630,17 +1722,24 @@ class Gitpulse {
             }
         });
     }
+    eagleView() {
+        return __awaiter(this, void 0, void 0, function* () {
+            (0, mermaid_1.generateMermaidCode)(path_1.default.join(this.branchesHistorykeymap));
+        });
+    }
     pushOrigin(branchName) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 let parentB = fs_1.default.readFileSync(this.branchesHistorykeymap, "utf-8");
                 const parentBranch = parentB ? JSON.parse(parentB) : null;
                 let value_key = "";
-                if (parentBranch) {
+                if (parentBranch && typeof parentBranch === 'object') {
                     // Iterate over the object to find the key for the given value
                     for (const [key, value] of Object.entries(parentBranch)) {
-                        if (value === branchName) {
+                        // Ensure the value is an array and contains the branchName
+                        if (Array.isArray(value) && value.includes(branchName)) {
                             value_key = key;
+                            break; // Stop iterating once the key is found
                         }
                     }
                 }
@@ -1648,30 +1747,67 @@ class Gitpulse {
                 const parsedData = JSON.parse(jsonData);
                 const commits = parsedData ? parsedData[branchName] : null;
                 const key_commits = parsedData ? parsedData[value_key] : null;
+                const key_commits_main = fs_1.default.readFileSync(this.mainCommitsIdOnly, "utf-8").split("\n").filter(line => line !== "");
                 let diff_commit_message = [];
                 var diff = [];
-                console.log("=", commits ? commits : "");
-                for (const keys in commits) {
-                    if (commits && key_commits) {
-                        const commitValue = key_commits[keys];
-                        if (!commitValue) {
-                            diff === null || diff === void 0 ? void 0 : diff.push(keys);
-                            diff_commit_message === null || diff_commit_message === void 0 ? void 0 : diff_commit_message.push(commits[keys].message);
-                            console.log("NP", keys);
+                if (value_key !== "main") {
+                    for (const keys in commits) {
+                        if (commits && key_commits) {
+                            const commitValue = key_commits[keys];
+                            if (!commitValue) {
+                                diff === null || diff === void 0 ? void 0 : diff.push(keys);
+                                diff_commit_message === null || diff_commit_message === void 0 ? void 0 : diff_commit_message.push(commits[keys].message);
+                                // console.log("NP",keys)
+                            }
                         }
+                    }
+                }
+                else if (value_key === "main") {
+                    let i = 0;
+                    for (const keys in commits) {
+                        if (commits && key_commits_main) {
+                            const commitValue = key_commits_main[i];
+                            if (!commitValue) {
+                                diff === null || diff === void 0 ? void 0 : diff.push(keys);
+                                diff_commit_message === null || diff_commit_message === void 0 ? void 0 : diff_commit_message.push(commits[keys].message);
+                                // console.log("NP",keys)
+                            }
+                        }
+                        i++;
                     }
                 }
                 if (!commits) {
                     return console.log(cli_color_1.default.redBright(`Something went wrong`));
                 }
                 if (diff.length > 0) {
+                    // console.log(diff,branchName,value_key,diff_commit_message);
                     yield (0, sendFile_1.Push)(diff, branchName, value_key, diff_commit_message);
                 }
-                return console.log(cli_color_1.default.greenBright(`Reached here`));
+                // return console.log(clc.greenBright(`Reached here`));
             }
             catch (error) {
                 return console.log(cli_color_1.default.redBright `Something went wrong`);
             }
+        });
+    }
+    initOrigin() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, initOrigin_1.initOriginMethod)();
+        });
+    }
+    pushOriginS3() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, pushOrigin_1.pushOriginOwner)();
+        });
+    }
+    mergePr() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, mergepr_1.mergePullRequest)();
+        });
+    }
+    pullOrigin() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (0, pullOrigin_1.pullOriginRequest)();
         });
     }
 }
@@ -1780,7 +1916,6 @@ program
 program
     .command('commit <message>')
     .description('Commits the project')
-    // .option('-m, --message <message>', 'Commit message')
     .action((message) => {
     console.log(message);
     gitpulse = Gitpulse.loadFromConfig();
@@ -1789,19 +1924,10 @@ program
 program
     .command('merge <message>')
     .description('Commits the project')
-    // .option('-m, --message <message>', 'Commit message')
     .action((message) => {
     console.log(message);
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.merge(message);
-});
-program
-    .command('push-origin <branch>')
-    .description('Push to the repo on internet')
-    // .option('-m, --message <message>', 'Commit message')
-    .action((branch) => {
-    gitpulse = Gitpulse.loadFromConfig();
-    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOrigin(branch);
 });
 program.command('add <action>')
     .description("Add files to stage area")
@@ -1814,5 +1940,47 @@ program.command('view ')
     .action((action) => {
     gitpulse = Gitpulse.loadFromConfig();
     gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.view();
+});
+program
+    .command('eagle view')
+    .description('Shows all the branches diagramatically')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.eagleView();
+});
+program
+    .command('create origin')
+    .description('Create a new repo on internet')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.initOrigin();
+});
+program
+    .command('push-origin <branch>')
+    .description('Push to the repo on internet')
+    .action((branch) => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOrigin(branch);
+});
+program
+    .command('push origin')
+    .description('Create a new repo on internet')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pushOriginS3();
+});
+program
+    .command('merge-pr')
+    .description('Create a new repo on internet')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.mergePr();
+});
+program
+    .command('pull origin')
+    .description('Pulls the latest changes of repository')
+    .action(() => {
+    gitpulse = Gitpulse.loadFromConfig();
+    gitpulse === null || gitpulse === void 0 ? void 0 : gitpulse.pullOrigin();
 });
 program.parse(process.argv);
