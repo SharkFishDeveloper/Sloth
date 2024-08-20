@@ -212,6 +212,7 @@ class Gitpulse {
     const modifiedFiles: string[] | null = [];
     filesDirectory?.map((file => {
       const stagingfilePath = path.join(this.stagingPath, file);
+      if(!file.includes("node_mod")){
       const dirfilePath = path.join(this.cwd, file);
       if (fs.existsSync(stagingfilePath)) {
         try {
@@ -227,6 +228,7 @@ class Gitpulse {
       else {
         untrackedFiles.push(file);
       }
+    }
     }))
 
     if (untrackedFiles.length > 0) {
