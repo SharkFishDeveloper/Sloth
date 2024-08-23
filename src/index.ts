@@ -202,15 +202,18 @@ class Gitpulse {
   }
 
   async checkUpdates() {
+    //! very inefficient
     let filesDirectory = await this.filesDirectory();
+    // console.log("FILES in DIRECTORY : ",filesDirectory);
     filesDirectory = filesDirectory.map((file) => {
       return file.substring(this.cwd.length);
     })
+    //! ERROR
     const untrackedFiles: string[] | null = [];
     const modifiedFiles: string[] | null = [];
     filesDirectory?.map((file => {
       const stagingfilePath = path.join(this.stagingPath, file);
-      if(!file.includes("node_mod") && !file.includes(".git")){
+      if(!file.includes("node_mod")){
       const dirfilePath = path.join(this.cwd, file);
       if (fs.existsSync(stagingfilePath)) {
         try {
@@ -507,7 +510,7 @@ class Gitpulse {
               const data = `${path.join(a, diff.name1 as string)}\n${readingStg}`;
               //! is it right ???
               let b = path.join(a, diff.name1 as string).replace(/\\/g, '.').replace(/:/g, ';');
-                // console.log("PATH A=>",b,a)
+                console.log("PATH A=>",b,a)
               zlib.gzip(data, (err, compressedData) => {
                 if (err) {
                   console.error('Error compressing data:', err);
@@ -902,7 +905,7 @@ class Gitpulse {
 
   async migrateToCommitInMain(commitId: string, srcDest: string, branch: string) {
    if(branch!=="b"){
-    //  console.log("ONLY IN ",this.map)
+     console.log("ONLY IN ",this.map)
     await this.calculateFutureWindow("main",commitId)
    }
     const commitsMain = fs.readFileSync(this.mainCommitsIdOnly,"utf-8");
@@ -1010,7 +1013,7 @@ class Gitpulse {
         
 
         // return;
-        // console.log("VALUE",clc.blueBright(a,idc))
+        console.log("VALUE",clc.blueBright(a,idc))
         if(this.map.get(a)!==idc){
           console.log(clc.redBright("SKIPPING",a))
           return;
@@ -1024,7 +1027,7 @@ class Gitpulse {
           // console.log(file)
           const decompressedData = await  zlib.gunzipSync(compressedData);
           const content = decompressedData.toString('utf8');
-          // console.log("CONTENT",content)
+          console.log("CONTENT",content)
           
           const newlineIndex = content.indexOf('\n');
           if (newlineIndex === -1) {
@@ -1353,7 +1356,7 @@ class Gitpulse {
           const pathToReadData = fs.readFileSync(stagingPath, "utf-8");
           let a = diff.path1.substring(this.stagingPath.length);
           let b = path.join(this.cwd, a, diff.name1 as string).replace(/\\/g, '.').replace(/:/g, ';');
-          // console.log(b,a)
+          console.log(b,a)
           const data = `${path.join(a, diff.name1 as string)}\n${pathToReadData}`;
           if (pathToReadData !== "") {
             zlib.gzip(data, (err, compressedData) => {
@@ -1389,7 +1392,7 @@ class Gitpulse {
         const pathToReadData = fs.readFileSync(stagingPath, "utf-8");
         let a = diff.path1.substring(this.stagingPath.length);
         let b = path.join(this.cwd, a, diff.name1 as string).replace(/\\/g, '.').replace(/:/g, ';');
-        // console.log(b,a)
+        console.log(b,a)
         const data = `${path.join(a, diff.name1 as string)}\n${pathToReadData}`;
         zlib.gzip(data, (err, compressedData) => {
           if (err) {
@@ -1595,12 +1598,12 @@ class Gitpulse {
         file += ".gz"
         file = path.join(this.branchingObjectsPath, commitId, "mdf",file)
 
-        // console.log("VALUE",clc.blueBright(a,commitId),this.map.get(a))
+        console.log("VALUE",clc.blueBright(a,commitId),this.map.get(a))
         if(this.map.get(a)!==commitId){
-          // console.log(clc.redBright("SKIPPING",a))
+          console.log(clc.redBright("SKIPPING",a))
           return;
         }
-        // console.log(clc.yellow("WORkING",a))
+        console.log(clc.yellow("WORkING",a))
       basename = path.join(process.cwd(),"../",a);
       //*  refer to MDF
       const fileCompressed = path.join(file);
@@ -1616,7 +1619,30 @@ class Gitpulse {
       fs.writeFileSync(path.join(this.cwd, firstLine), remainingContent);
     
     })
+    // const modifiedFilesFiles = fs.readdir(path.join(branchPathObject, "mdf"), async (err, files) => {
+    //   if(!files){
+    //     return;
+    //   }
+    //   const filesArray = files;
+    //   filesArray.forEach((file) => {
 
+    //     const index = file.indexOf(path.basename(path.join(process.cwd(),"../")));
+    //     let basename = path.join(process.cwd(),path.basename(file));
+    //     const a = file.substring(index + path.basename(path.join(process.cwd(),"../")).length + 1);
+    //     basename = path.join(process.cwd(),"../",a)
+    //     const fileCompressed = path.join(path.join(branchPathObject, "mdf", file));
+    //     const compressedData = fs.readFileSync(fileCompressed, { encoding: null });
+    //     const decompressedData = zlib.gunzipSync(compressedData);
+    //     const content = decompressedData.toString('utf8');
+    //     const newlineIndex = content.indexOf('\n');
+    //     if (newlineIndex === -1) {
+    //       return console.log(clc.red("Something went wrong ..."));
+    //     }
+    //     const firstLine = content.substring(0, newlineIndex);
+    //     const remainingContent = content.substring(newlineIndex + 1);
+    //     fs.writeFileSync(path.join(this.cwd, firstLine), remainingContent);
+    //   })
+    // });
 
     const deletedFiles = fs.readFileSync(path.join(branchPathObject, "rm.txt"), "utf-8");
     const deletedFilesArray: string[] | null = deletedFiles.split("\n").filter(line => line !== "");
@@ -1626,7 +1652,7 @@ class Gitpulse {
         const a = delFile.substring(index + path.basename(path.join(process.cwd(),"../")).length + 1);
 
         if(this.map.get(a)!==commitId){
-          // console.log(clc.redBright("SKIPPING",a))
+          console.log(clc.redBright("SKIPPING",a))
           return;
         }
 

@@ -168,7 +168,7 @@ class Gitpulse {
                 reject(err);
             })
                 .on('end', () => {
-                // console.log(directories);
+                console.log(directories);
                 resolve(directories);
             });
         });
@@ -228,15 +228,18 @@ class Gitpulse {
     }
     checkUpdates() {
         return __awaiter(this, void 0, void 0, function* () {
+            //! very inefficient
             let filesDirectory = yield this.filesDirectory();
+            console.log("FILES in DIRECTORY : ", filesDirectory);
             filesDirectory = filesDirectory.map((file) => {
                 return file.substring(this.cwd.length);
             });
+            //! ERROR
             const untrackedFiles = [];
             const modifiedFiles = [];
             filesDirectory === null || filesDirectory === void 0 ? void 0 : filesDirectory.map((file => {
                 const stagingfilePath = path_1.default.join(this.stagingPath, file);
-                if (!file.includes("node_mod") && !file.includes(".git")) {
+                if (!file.includes("node_mod")) {
                     const dirfilePath = path_1.default.join(this.cwd, file);
                     if (fs_1.default.existsSync(stagingfilePath)) {
                         try {
@@ -521,7 +524,7 @@ class Gitpulse {
                                 const data = `${path_1.default.join(a, diff.name1)}\n${readingStg}`;
                                 //! is it right ???
                                 let b = path_1.default.join(a, diff.name1).replace(/\\/g, '.').replace(/:/g, ';');
-                                // console.log("PATH A=>",b,a)
+                                console.log("PATH A=>", b, a);
                                 zlib_1.default.gzip(data, (err, compressedData) => {
                                     if (err) {
                                         console.error('Error compressing data:', err);
@@ -883,7 +886,7 @@ class Gitpulse {
     migrateToCommitInMain(commitId, srcDest, branch) {
         return __awaiter(this, void 0, void 0, function* () {
             if (branch !== "b") {
-                //  console.log("ONLY IN ",this.map)
+                console.log("ONLY IN ", this.map);
                 yield this.calculateFutureWindow("main", commitId);
             }
             const commitsMain = fs_1.default.readFileSync(this.mainCommitsIdOnly, "utf-8");
@@ -985,7 +988,7 @@ class Gitpulse {
                     let basename = path_1.default.join(process.cwd(), path_1.default.basename(file));
                     const a = file.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
                     // return;
-                    // console.log("VALUE",clc.blueBright(a,idc))
+                    console.log("VALUE", cli_color_1.default.blueBright(a, idc));
                     if (this.map.get(a) !== idc) {
                         console.log(cli_color_1.default.redBright("SKIPPING", a));
                         return;
@@ -998,7 +1001,7 @@ class Gitpulse {
                     // console.log(file)
                     const decompressedData = yield zlib_1.default.gunzipSync(compressedData);
                     const content = decompressedData.toString('utf8');
-                    // console.log("CONTENT",content)
+                    console.log("CONTENT", content);
                     const newlineIndex = content.indexOf('\n');
                     if (newlineIndex === -1) {
                     }
@@ -1301,7 +1304,7 @@ class Gitpulse {
                         const pathToReadData = fs_1.default.readFileSync(stagingPath, "utf-8");
                         let a = diff.path1.substring(this.stagingPath.length);
                         let b = path_1.default.join(this.cwd, a, diff.name1).replace(/\\/g, '.').replace(/:/g, ';');
-                        // console.log(b,a)
+                        console.log(b, a);
                         const data = `${path_1.default.join(a, diff.name1)}\n${pathToReadData}`;
                         if (pathToReadData !== "") {
                             zlib_1.default.gzip(data, (err, compressedData) => {
@@ -1336,7 +1339,7 @@ class Gitpulse {
                     const pathToReadData = fs_1.default.readFileSync(stagingPath, "utf-8");
                     let a = diff.path1.substring(this.stagingPath.length);
                     let b = path_1.default.join(this.cwd, a, diff.name1).replace(/\\/g, '.').replace(/:/g, ';');
-                    // console.log(b,a)
+                    console.log(b, a);
                     const data = `${path_1.default.join(a, diff.name1)}\n${pathToReadData}`;
                     zlib_1.default.gzip(data, (err, compressedData) => {
                         if (err) {
@@ -1542,12 +1545,12 @@ class Gitpulse {
                 file = file.replace(/\\/g, '.').replace(/:/g, ';');
                 file += ".gz";
                 file = path_1.default.join(this.branchingObjectsPath, commitId, "mdf", file);
-                // console.log("VALUE",clc.blueBright(a,commitId),this.map.get(a))
+                console.log("VALUE", cli_color_1.default.blueBright(a, commitId), this.map.get(a));
                 if (this.map.get(a) !== commitId) {
-                    // console.log(clc.redBright("SKIPPING",a))
+                    console.log(cli_color_1.default.redBright("SKIPPING", a));
                     return;
                 }
-                // console.log(clc.yellow("WORkING",a))
+                console.log(cli_color_1.default.yellow("WORkING", a));
                 basename = path_1.default.join(process.cwd(), "../", a);
                 //*  refer to MDF
                 const fileCompressed = path_1.default.join(file);
@@ -1562,6 +1565,29 @@ class Gitpulse {
                 const remainingContent = content.substring(newlineIndex + 1);
                 fs_1.default.writeFileSync(path_1.default.join(this.cwd, firstLine), remainingContent);
             }));
+            // const modifiedFilesFiles = fs.readdir(path.join(branchPathObject, "mdf"), async (err, files) => {
+            //   if(!files){
+            //     return;
+            //   }
+            //   const filesArray = files;
+            //   filesArray.forEach((file) => {
+            //     const index = file.indexOf(path.basename(path.join(process.cwd(),"../")));
+            //     let basename = path.join(process.cwd(),path.basename(file));
+            //     const a = file.substring(index + path.basename(path.join(process.cwd(),"../")).length + 1);
+            //     basename = path.join(process.cwd(),"../",a)
+            //     const fileCompressed = path.join(path.join(branchPathObject, "mdf", file));
+            //     const compressedData = fs.readFileSync(fileCompressed, { encoding: null });
+            //     const decompressedData = zlib.gunzipSync(compressedData);
+            //     const content = decompressedData.toString('utf8');
+            //     const newlineIndex = content.indexOf('\n');
+            //     if (newlineIndex === -1) {
+            //       return console.log(clc.red("Something went wrong ..."));
+            //     }
+            //     const firstLine = content.substring(0, newlineIndex);
+            //     const remainingContent = content.substring(newlineIndex + 1);
+            //     fs.writeFileSync(path.join(this.cwd, firstLine), remainingContent);
+            //   })
+            // });
             const deletedFiles = fs_1.default.readFileSync(path_1.default.join(branchPathObject, "rm.txt"), "utf-8");
             const deletedFilesArray = deletedFiles.split("\n").filter(line => line !== "");
             deletedFilesArray.forEach((delFile) => __awaiter(this, void 0, void 0, function* () {
@@ -1569,7 +1595,7 @@ class Gitpulse {
                 let basename = path_1.default.join(process.cwd(), path_1.default.basename(delFile));
                 const a = delFile.substring(index + path_1.default.basename(path_1.default.join(process.cwd(), "../")).length + 1);
                 if (this.map.get(a) !== commitId) {
-                    // console.log(clc.redBright("SKIPPING",a))
+                    console.log(cli_color_1.default.redBright("SKIPPING", a));
                     return;
                 }
                 basename = path_1.default.join(process.cwd(), "../", a);
