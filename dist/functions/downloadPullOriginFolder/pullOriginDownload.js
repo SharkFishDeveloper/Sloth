@@ -43,15 +43,12 @@ function pullOriginDownload(preUrl) {
                     .on('error', reject);
             });
             const yourRepoName = path_1.default.basename(path_1.default.join(process.cwd(), "../"));
+            // console.log("youRoep",yourRepoName)
             // console.log(`File successfully downloaded to: ${downloadfilePath}`);
-            yield extractZip(downloadfilePath, extractedZipDir);
-            fs_1.default.readdir(downloadDir, (err, files) => __awaiter(this, void 0, void 0, function* () {
-                if (!files.includes(yourRepoName)) {
-                    console.log(cli_color_1.default.yellowBright(`First download it, and then you can pull latest changes*`));
-                    yield fs_extra_1.default.remove(downloadDir);
-                }
-            }));
-            yield copySlothFolderAndRemoveZip(yourRepoName, downloadDir);
+            const check = yield extractZip(downloadfilePath, extractedZipDir);
+            if (check) {
+                yield copySlothFolderAndRemoveZip(yourRepoName, downloadDir);
+            }
         }
         catch (error) {
             //@ts-ignore
@@ -75,16 +72,25 @@ exports.pullOriginDownload = pullOriginDownload;
 function extractZip(zipFilePath, outputDir) {
     return __awaiter(this, void 0, void 0, function* () {
         // console.log(`Extracting ${zipFilePath} to ${outputDir}`);
+        let bool = true;
         yield fs_extra_1.default.mkdirp(outputDir);
-        return new Promise((resolve, reject) => {
+        yield new Promise((resolve, reject) => {
             fs_1.default.createReadStream(zipFilePath)
                 .pipe(unzipper_1.default.Extract({ path: outputDir, }))
                 .on('close', () => {
-                // console.log(`Extraction complete to ${outputDir}`);
                 resolve();
             })
                 .on('error', reject);
         });
+        const yourRepoName = path_1.default.basename(path_1.default.join(process.cwd(), "../"));
+        const files = yield fs_1.default.promises.readdir(outputDir);
+        if (!files.includes(yourRepoName)) {
+            bool = false;
+            console.log(cli_color_1.default.yellowBright('First download the repository, and then you can pull the latest changes*'));
+            // Remove the directory if the repository is not found
+            yield fs_extra_1.default.remove(outputDir);
+        }
+        return bool;
     });
 }
 function copySlothFolderAndRemoveZip(yourRepoName, downloadDir) {
@@ -93,7 +99,6 @@ function copySlothFolderAndRemoveZip(yourRepoName, downloadDir) {
         const deletGitpulse = path_1.default.join(destPath, "/.gitpulse");
         const pathname = path_1.default.join(downloadDir, yourRepoName, "Sloth", ".gitpulse");
         yield emptyDirExceptFile(destPath, "config.json");
-        // console.log(pathname,destPath)
         yield fs_extra_1.default.copy(pathname, destPath, { overwrite: true });
         yield fs_extra_1.default.remove(downloadDir);
         return console.log(cli_color_1.default.greenBright(`You are upto date now -- :)`));
@@ -129,7 +134,7 @@ function emptyDirExceptFile(dirPath, fileToExclude) {
         }
         catch (error) {
             //@ts-ignore
-            console.error(`Error emptying directory: ${error.message}`);
+            // console.error(`Error emptying directory: ${error.message}`);
         }
     });
 }

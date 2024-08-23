@@ -42,7 +42,7 @@ function downloadPr(preUrl, parentBranch, childBranch) {
                     .on('finish', () => resolve(downloadfilePath))
                     .on('error', reject);
             });
-            console.log(`File successfully downloaded to: ${downloadfilePath}`);
+            // console.log(`File successfully downloaded to: ${downloadfilePath}`);
             yield extractZip(downloadfilePath, extractedZipDir);
         }
         catch (error) {
@@ -66,14 +66,14 @@ function downloadPr(preUrl, parentBranch, childBranch) {
 exports.downloadPr = downloadPr;
 function extractZip(zipFilePath, outputDir) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(`Extracting ${zipFilePath} to ${outputDir}`);
+        // console.log(`Extracting ${zipFilePath} to ${outputDir}`);
         // Create extraction directory if it doesn't exist
         yield fs_extra_1.default.mkdirp(outputDir);
         return new Promise((resolve, reject) => {
             fs_1.default.createReadStream(zipFilePath)
                 .pipe(unzipper_1.default.Extract({ path: outputDir }))
                 .on('close', () => {
-                console.log(`Extraction complete to ${outputDir}`);
+                // console.log(`Extraction complete to ${outputDir}`);
                 resolve();
             })
                 .on('error', reject);
@@ -94,14 +94,14 @@ function copyAndPasteBranchesAndCommits(extractedZipDir) {
             yield fs_extra_1.default.remove(downloadDir);
         }
         catch (err) {
-            console.error("Error copying files:", err);
+            // console.error("Error copying files:", err);
         }
     });
 }
 function writeBranchChangesTxt(writeBranchChangesTxt, parentBranch, childBranch) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log("PAR", parentBranch, "CHILD", childBranch);
+            // console.log("PAR",parentBranch,"CHILD",childBranch);
             const branchZippedData = fs_1.default.readFileSync(path_1.default.join(writeBranchChangesTxt, "branchChanges.txt"), "utf-8");
             const buffer = Buffer.from(branchZippedData, 'base64');
             const decompressed = zlib_1.default.gunzipSync(buffer);
