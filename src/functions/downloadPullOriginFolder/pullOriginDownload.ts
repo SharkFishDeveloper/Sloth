@@ -35,18 +35,13 @@ export async function pullOriginDownload(preUrl:string) {
         .on('error', reject);
     });
     const yourRepoName = path.basename(path.join(process.cwd(),"../"));
-
+    // console.log("youRoep",yourRepoName)
     // console.log(`File successfully downloaded to: ${downloadfilePath}`);
-
-    await extractZip(downloadfilePath, extractedZipDir);
     
-    fs.readdir(downloadDir,async(err,files)=>{
-      if(!files.includes(yourRepoName)){
-        console.log(clc.yellowBright(`First download it, and then you can pull latest changes*`));
-        await fsExtra.remove(downloadDir);
-      }
-    })
-    await copySlothFolderAndRemoveZip(yourRepoName,downloadDir);
+    const check = await extractZip(downloadfilePath, extractedZipDir);
+    if(check){
+      await copySlothFolderAndRemoveZip(yourRepoName,downloadDir);
+    }
 
 
    } catch (error) {
@@ -67,18 +62,31 @@ export async function pullOriginDownload(preUrl:string) {
 
 async function extractZip(zipFilePath: string, outputDir: string) {
     // console.log(`Extracting ${zipFilePath} to ${outputDir}`);
-
+    let bool = true;
     await fsExtra.mkdirp(outputDir);
   
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       fs.createReadStream(zipFilePath)
         .pipe(unzipper.Extract({ path: outputDir, }))
         .on('close', () => {
-          // console.log(`Extraction complete to ${outputDir}`);
           resolve();
         })
         .on('error', reject);
     });
+    const yourRepoName = path.basename(path.join(process.cwd(),"../"));
+    const files = await fs.promises.readdir(outputDir);
+
+    if (!files.includes(yourRepoName)) {
+      bool = false;
+      console.log(clc.yellowBright('First download the repository, and then you can pull the latest changes*'));
+
+      // Remove the directory if the repository is not found
+      await fsExtra.remove(outputDir);
+    }
+    return bool;
+    
+
+
   }
 
   async function copySlothFolderAndRemoveZip(yourRepoName:string , downloadDir:string) {
@@ -87,7 +95,6 @@ async function extractZip(zipFilePath: string, outputDir: string) {
     const deletGitpulse = path.join(destPath,"/.gitpulse");
     const pathname = path.join(downloadDir,yourRepoName,"Sloth",".gitpulse")
     await emptyDirExceptFile(destPath,"config.json");
-    // console.log(pathname,destPath)
     await fsExtra.copy(pathname,destPath,{overwrite:true})
     await fsExtra.remove(downloadDir);
     return console.log(clc.greenBright(`You are upto date now -- :)`));
@@ -121,7 +128,7 @@ async function extractZip(zipFilePath: string, outputDir: string) {
                 // console.log(`Removed file: ${itemPath}`);
             }
         }
-
+        
     } catch (error) {
       //@ts-ignore
         // console.error(`Error emptying directory: ${error.message}`);
