@@ -122,7 +122,7 @@ class Gitpulse {
       klaw(path.join(this.cwd))
         .on('data', (item) => {
           // console.log(">>>>",item)
-          if (item.path.includes("sloth") || item.path.includes("Sloth")|| item.path.includes(".git")) {
+          if (item.path.includes("sloth") || item.path.includes("Sloth")|| item.path.includes(".git") || item.path.includes("node_modules")) {
           }
 
           else if (item.stats.isDirectory()) {
