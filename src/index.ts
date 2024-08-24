@@ -1518,8 +1518,8 @@ class Gitpulse {
 
   async gotoWorkingAndStaging(branchName:string,commitId: string) {
     // await this.calculateFutureWindow(branchName,commitId)
-    console.log(clc.bgMagentaBright("---------------------------"))
-    console.log(clc.magentaBright(commitId))
+    // console.log(clc.bgMagentaBright("---------------------------"))
+    // console.log(clc.magentaBright(commitId))
     const branchPathObject = path.join(this.branchingObjectsPath, commitId);
     const addedFiles = fs.readFileSync(path.join(branchPathObject, "ad.txt"), "utf-8");
     // console.log("####################");
