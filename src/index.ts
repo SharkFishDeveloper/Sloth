@@ -1568,7 +1568,7 @@ class Gitpulse {
 
         // console.log("VALUE",clc.blueBright(a,commitId),this.map.get(a))
         if(this.map.get(a)!==commitId){
-          console.log(clc.redBright("SKIPPING",a))
+          // console.log(clc.redBright("SKIPPING",a))
           return;
         }
         console.log(clc.yellow("WORkING",a))
