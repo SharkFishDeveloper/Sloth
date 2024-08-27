@@ -279,7 +279,7 @@ class Gitpulse {
     })
     if(files.length===0){
       await this.copyDirectory(path.join(pathnew, dirName as string), path.join(this.stagingPath, dirName))
-        .then(() => console.log('Coputing'))
+        .then(() => console.log(''))
         .catch(err => console.error(''));
       }
   })
@@ -378,7 +378,9 @@ class Gitpulse {
     const currentBranchName = fs.readFileSync(this.currentBranchName, "utf-8");
     const currentHead = fs.readFileSync(this.currentHead,"utf-8")
     const mainCommitIds = fs.readFileSync(this.mainCommitsIdOnly,"utf-8");
-    let mainCommitIdsArray = mainCommitIds.split("\n").filter(line=>line!=="");
+
+    let mainCommitIdsArray = mainCommitIds.split("\n").filter(line=>line!=="").reverse();//* should this be reversed ??
+
     const jsonData = fs.readFileSync(this.branchesPath,"utf-8")
     const parsedData:BranchInterface =jsonData? JSON.parse(jsonData):"";
     const data = parsedData[currentBranchName];
@@ -392,8 +394,9 @@ class Gitpulse {
       await this.branchCommits(message);
       return;
     }
-    else if(mainCommitIdsArray.length !==1 && mainCommitIdsArray[mainCommitIdsArray.length-1] === currentHead ){
-      return console.log(clc.redBright(`Please make a new branch to commit`));
+    else if(mainCommitIdsArray.length > 1 && mainCommitIdsArray[mainCommitIdsArray.length-1] !== currentHead ){
+      // console.log(mainCommitIdsArray,mainCommitIdsArray.length,mainCommitIdsArray[mainCommitIdsArray.length-1],currentHead)
+      return console.log(clc.redBright(`Please make a new branch in main to commit`));
     }
     console.log("Commit Message : ", message);
     const commitDataPath: string = fs.readFileSync(this.commitsPath, "utf-8");
@@ -1092,7 +1095,7 @@ class Gitpulse {
 
 
     }
-
+    await this.add(".");
     fs.writeFileSync(this.currentHead, commitId);
     return console.log(clc.magentaBright("--------"))
   }

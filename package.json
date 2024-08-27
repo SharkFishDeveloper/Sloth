@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "git": "tsc -b && node ./dist/index"
+    "test": "tsc -b && node ./dist/index",
+    "git": "node ./dist/index"
   },
   "keywords": [],
   "author": "",

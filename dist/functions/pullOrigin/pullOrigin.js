@@ -37,6 +37,7 @@ function pullOriginRequest() {
             }
             else {
                 yield (0, pullOriginDownload_1.pullOriginDownload)(result.data.message);
+                console.log(cli_color_1.default.magentaBright(`To show the latest changes, you need to switch branch/commit one time`));
             }
         }
         catch (error) {
