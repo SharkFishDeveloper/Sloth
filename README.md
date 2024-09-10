@@ -1,6 +1,6 @@
-# Sloth Command Documentation . Sloth is made by Shahzeb/SharkFishDeveloper {#sloth-command-documentation-.-sloth-is-made-by-shahzebsharkfishdeveloper .unnumbered}
+# Sloth Command Documentation . Sloth is made by Shahzeb/SharkFishDeveloper 
 
-Sloth - A Global Version Control System
+##Sloth - A Global Version Control System
 
 1.  Clone the Repository
 
@@ -11,14 +11,13 @@ Sloth - A Global Version Control System
 2.  Initialize Gitpulse
 
     -   Navigate into the Sloth directory:
+    -   cd Sloth
+    -   Initialize Gitpulse in the project with:
+        npm run git init
 
-cd Sloth
 
--   Initialize Gitpulse in the project with:
 
-npm run git init
-
-# Note: All commands should be run inside the \"Sloth\" working directory. The folders to be controlled should be kept outside of Sloth. Do not edit the Sloth directory itself. {#note-all-commands-should-be-run-inside-the-sloth-working-directory.-the-folders-to-be-controlled-should-be-kept-outside-of-sloth.-do-not-edit-the-sloth-directory-itself. .unnumbered}
+### Note: All commands should be run inside the \"Sloth\" working directory. The folders to be controlled should be kept outside of Sloth. Do not edit the Sloth directory itself. {#note-all-commands-should-be-run-inside-the-sloth-working-directory.-the-folders-to-be-controlled-should-be-kept-outside-of-sloth.-do-not-edit-the-sloth-directory-itself. .unnumbered}
 
 > **Initialization**:
 
