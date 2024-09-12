@@ -47,7 +47,7 @@ This shows the commit history for the currently active branch.
 
 a.  *Specific branch:*
 
--   npm run git log
+-   npm run git log <branch-name>
 
 Replace with the name of the branch to view its commit history.
 
@@ -74,13 +74,13 @@ Revert the state of your project to a previous commit.
 
 a.  *Main branch:*
 
--   npm run git migrate-main
+-   npm run git migrate-main <commitId>
 
 Migrates the main branch to the specified .
 
 a.  *Current branch:*
 
--   npm run git migrate-branch
+-   npm run git migrate-branch <commitId>
 
 Migrates the current branch to the specified .
 
@@ -90,13 +90,13 @@ Manage branches in the project.
 
 a.  *Create a new branch:*
 
--   npm run git checkout
+-   npm run git checkout <branchName>
 
 Creates and checks out a new branch named .
 
 a.  *Go to an already created branch:*
 
--   npm run git goto
+-   npm run git goto <branchName>
 
 Switches to the specified and updates to its latest commit.
 
