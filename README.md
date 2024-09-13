@@ -1,6 +1,6 @@
-# Sloth Command Documentation . Sloth is made by Shahzeb/SharkFishDeveloper 
+# Sloth Command Documentation . Sloth is created by Shahzeb/SharkFishDeveloper 
 
-##Sloth - A Global Version Control System
+## Sloth - A Global Version Control System
 
 1.  Clone the Repository
 
@@ -11,13 +11,15 @@
 2.  Initialize Gitpulse
 
     -   Navigate into the Sloth directory:
-    -   cd Sloth
-    -   Initialize Gitpulse in the project with:
-        npm run git init
 
+cd Sloth
 
+-   Initialize Gitpulse in the project with:
 
-### Note: All commands should be run inside the \"Sloth\" working directory. The folders to be controlled should be kept outside of Sloth. Do not edit the Sloth directory itself. {#note-all-commands-should-be-run-inside-the-sloth-working-directory.-the-folders-to-be-controlled-should-be-kept-outside-of-sloth.-do-not-edit-the-sloth-directory-itself. .unnumbered}
+npm run git init
+
+### Note: All commands should be run inside the \"Sloth\" working directory. The folders to be controlled should be kept outside of Sloth. Do not edit the Sloth directory itself.
+
 
 > **Initialization**:
 
@@ -47,7 +49,7 @@ This shows the commit history for the currently active branch.
 
 a.  *Specific branch:*
 
--   npm run git log <branch-name>
+-   npm run git log < branch >
 
 Replace with the name of the branch to view its commit history.
 
@@ -57,7 +59,7 @@ Handle committing changes and adding files to the staging area.
 
 a.  *Add files to staging:*
 
--   npm run git add
+-   npm run git add < action >
 
 Adds files to the staging area. The can be a specific file name or \".\"
 to add all changes.
@@ -74,13 +76,13 @@ Revert the state of your project to a previous commit.
 
 a.  *Main branch:*
 
--   npm run git migrate-main <commitId>
+-   npm run git migrate-main < commitId >
 
 Migrates the main branch to the specified .
 
 a.  *Current branch:*
 
--   npm run git migrate-branch <commitId>
+-   npm run git migrate-branch < commitId >
 
 Migrates the current branch to the specified .
 
@@ -90,13 +92,13 @@ Manage branches in the project.
 
 a.  *Create a new branch:*
 
--   npm run git checkout <branchName>
+-   npm run git checkout < branch-name >
 
 Creates and checks out a new branch named .
 
 a.  *Go to an already created branch:*
 
--   npm run git goto <branchName>
+-   npm run git goto < branch-name >
 
 Switches to the specified and updates to its latest commit.
 
@@ -106,7 +108,7 @@ Work with branches by merging them or viewing their status.
 
 a.  *Merge current branch with main:*
 
--   npm run git merge
+-   npm run git merge 
 
 You must be present on the branch which you want to merge with Main !!
 Merges the current branch into main with a custom commit .
