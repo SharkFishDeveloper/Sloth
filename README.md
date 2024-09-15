@@ -1,4 +1,4 @@
-# Sloth Command Documentation . Sloth is created by Shahzeb/SharkFishDeveloper 
+# Sloth Command Documentation .Sloth is created by Shahzeb/SharkFishDeveloper 
 
 ## Sloth - A Global Version Control System
 
