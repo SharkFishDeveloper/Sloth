@@ -1007,7 +1007,7 @@ class Gitpulse {
         try {
           if (!fileExtensionRegex.test(basename)) {
             // console.log("DIRECTORY->",basename)
-            await fsExtra.mkdir(basename)
+            await fsExtra.mkdirSync(basename)
           } else {
             // console.log("FILENAME->",basename)
             await fs.writeFileSync(basename, "")
